@@ -20,11 +20,11 @@
 [![keyword of this version no. 3](https://img.shields.io/badge/keyword-som-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
 [![keyword of this version no. 4](https://img.shields.io/badge/keyword-cuda-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
 
-[![technology used no. 1](https://img.shields.io/badge/built&nbsp;with-cuda-red.svg)](https://developer.nvidia.com/cuda-zone) 
-[![technology used no. 2](https://img.shields.io/badge/built&nbsp;with-c++-red.svg)](http://www.cplusplus.com/) 
-[![technology used no. 3](https://img.shields.io/badge/built&nbsp;with-c-red.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
-[![technology used no. 4](https://img.shields.io/badge/built&nbsp;with-cmake-red.svg)](https://cmake.org/) 
-[![software used no. 1](https://img.shields.io/badge/software-jetbrains&nbsp;clion-gold.svg)](https://www.jetbrains.com/clion/)
+[![technology used no. 1](https://img.shields.io/badge/built&nbsp;with-apache&nbsp;spark&nbsp;api-red.svg)](https://spark.apache.org/) 
+[![technology used no. 2](https://img.shields.io/badge/built&nbsp;with-java-red.svg)](https://www.java.com/) 
+[![technology used no. 3](https://img.shields.io/badge/built&nbsp;with-gradle-red.svg)](https://gradle.org/)
+[![software used no. 1](https://img.shields.io/badge/software-eclipse&nbsp;ide-gold.svg)](https://www.eclipse.org/)
+[![software used no. 2](https://img.shields.io/badge/software-jetbrains&nbsp;intellij&nbsp;idea-gold.svg)](https://www.jetbrains.com/idea/)
 
 [![star this repository](http://githubbadges.com/star.svg?user=rubenandrebarreiro&repo=apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree&style=flat)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/stargazers)
 [![fork this repository](http://githubbadges.com/fork.svg?user=rubenandrebarreiro&repo=apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-trees&style=flat)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/fork)
