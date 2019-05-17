@@ -1,20 +1,49 @@
 package flight_airports_minimum_spanning_tree;
 
-import org.apache.spark.api.java.function.Function;
-
 /**
- * High Performance Computing
- * 
- * Practical Lab #3.
- * 
- * Integrated Master of Computer Science and Engineering
- * Faculty of Science and Technology of New University of Lisbon
- * 
- * Authors:
- * @author Ruben Andre Barreiro - r.barreiro@campus.fct.unl.pt
- *
- */
+*
+* Apache Spark API - Flight Airports' Average Departure Delays Minimum Spanning Tree (Prim's Algorithm)
+* 
+* High Performance Computing
+* Work Assignment/Practical Lab's Project #2
+* 
+* Integrated Master of Computer Science and Engineering
+* Faculty of Science and Technology of New University of Lisbon
+*
+* Description/Steps of operations performed by the GPU CUDA's Kernels:
+* - Build an Undirected Graph to represent the Average Departure Delay of the Flights between any two Airports
+*   (the Average Departure Delays must consider all Flights between the both Airports, disregarding the origin and the destination).
+*   The Graph's nodes are thus the Airports, and the edges represent direct routes between Airports,
+*   labelled with the Average Departure Delays of the routes' flights. (STEP DONE)
+*   
+*   Suggestion:
+*   - Represent the Graph through an Adjacency Matrix.
+*   	- See https://spark.apache.org/docs/latest/mllib-data-types.html#distributed-matrix
+*   - To use the Distributed Matrix of the Spark's API, you will have to add the following dependency to file build.gradle:
+*      - implementation 'org.apache.spark:spark-mllib_2.11:2.3.0'
+*      
+* - Compute the Graph's Minimum Spanning Tree (M.S.T.) by
+*   implementing the parallel version of Prim's Algorithm (available from CLIP platform).
+*   The M.S.T. will be the subgraph of the original with the minimum total edge weight
+*   (sum of the average delays). Output the M.S.T. and its total edge weight.
+*   
+* - Identify the 'Bottleneck' Airport, i.e., the Airport with higher aggregated Average Departure Delay time
+*   (sum of the Average Departure Delays of all routes going out of the Airport)
+*   from the ones contained in the complement Graph of the M.S.T. previously computed.
+*   
+* - Modify the Graph to reduce by a given factor the Average Departure Delay time of
+*   all routes going out of the selected airport.
+*   This factor will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[.
+*   
+* - Recompute the M.S.T. and display the changes perceived in the resulting subgraph and
+*   on the sum of the total edge weight
+*
+* Authors:
+* @author Ruben Andre Barreiro - r.barreiro@campus.fct.unl.pt
+*
+*/
 
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 
@@ -44,10 +73,10 @@ public class FlightAnalyser {
 	
 	// IMPLEMENTATION STEPS
 	
-	// 1. Build an undirected graph to represent the average delay of the flights between any two airports (the average must
-	// consider all flights between the both airports, disregarding the origin and the destination). The graph’s nodes are
-	// thus the airports, and the edges represent direct routes between airports, labeled with the average delays of the
-	// routes’ flights. (STEP DONE)
+	// 1. Build an Undirected Graph to represent the Average Departure Delay of the Flights between any two Airports
+	// (the Average Departure Delays must consider all Flights between the both Airports, disregarding the origin and the destination).
+	// The Graph's nodes are thus the Airports, and the edges represent direct routes between Airports,
+	// labelled with the Average Departure Delays of the routes' flights. (STEP DONE)
 	
 	// Suggestion:
 	// - Represent the Graph through an Adjacency Matrix.
@@ -55,21 +84,24 @@ public class FlightAnalyser {
 	// - To use the Distributed Matrix of the Spark's API, you will have to add the following dependency to file build.gradle:
 	//   - implementation 'org.apache.spark:spark-mllib_2.11:2.3.0'
 	
-	// 2. Compute the Graph’s Minimum Spanning Tree (M.S.T.) by implementing the parallel version of Prim’s Algorithm
-	// (available from CLIP). The M.S.T. will be the subgraph of the original with the minimum total edge weight (sum of the
-	// average delays). Output the M.S.T. and its total edge weight.
+	// 2. Compute the Graph's Minimum Spanning Tree (M.S.T.) by
+	// implementing the parallel version of Prim's Algorithm (available from CLIP platform).
+	// The M.S.T. will be the subgraph of the original with the minimum total edge weight
+	// (sum of the average delays). Output the M.S.T. and its total edge weight.
 	
-	// 3. Identify the bottleneck airport, i.e., the airport with higher aggregated delay time (sum of the delays of all routes
-	// going out of the airport) from the ones contained in the complement graph of the M.S.T. previously computed.
+	// 3. Identify the 'Bottleneck' Airport, i.e., the Airport with higher aggregated Average Departure Delay time
+	// (sum of the Average Departure Delays of all routes going out of the Airport)
+	// from the ones contained in the complement Graph of the M.S.T. previously computed.
 	
-	// 4. Modify the graph to reduce by a given factor the delay time of all routes going out of the selected airport. This factor
-	// will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[.
+	// 4. Modify the Graph to reduce by a given factor the Average Departure Delay time of
+	// all routes going out of the selected airport.
+	// This factor will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[.
 	
-	// 5. Recompute the M.S.T. and display the changes perceived in the resulting subgraph and on the sum of the total edge
-	// weight
+	// 5. Recompute the M.S.T. and display the changes perceived in the resulting subgraph and
+	// on the sum of the total edge weight
 	
 	// NOTE:
-	// - Fields of the Structure of .CSV file:
+	// - Fields of the Structure of .CSV file, include:
 	//   1) day_of_month - StringType
 	//   2) day_of_week - StringType
 	//   3) carrier - StringType
@@ -92,11 +124,11 @@ public class FlightAnalyser {
 	// Methods:
 	
 	/**
-	 * Returns all average of departure delays of flights for each route, ordered by descending of Average field.
+	 * Returns all Average Departure Delays of Flights for each route, ordered by descending of Average field.
 	 * 
-	 * @param data the Dataset (built of Rows) of the flights read from the .CSV file
+	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
 	 * 
-	 * @return all average of departure delays of flights for each route, ordered by descending of Average field
+	 * @return all Average Departure Delays of Flights for each route, ordered by descending of Average field
 	 */
 	public static Dataset<Row> getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset(Dataset<Row> flightsDataset) {
 		Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset = 
@@ -108,14 +140,14 @@ public class FlightAnalyser {
 	}
 	
 	/**
-	 * Returns all average of departure delays of flights for each route, ordered by descending of Average field,
+	 * Returns all Average Departure Delays of Flights for each route, ordered by descending of Average field,
 	 * disregarding Origin and Destination, with indexes (origin_num, destination_num) to
 	 * build the Coordinate Adjacency Matrix.
 	 * 
 	 * @param sqlContext the SQL Context to perform SQL Queries
-	 * @param data the data set of the flights read from the .CSV file
+	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
 	 * 
-	 * @return all average of departure delays of flights for each route, ordered by descending of Average field,
+	 * @return all Average Departure Delays of Flights for each route, ordered by descending of Average field,
 	 * 		   disregarding Origin and Destination, with indexes (origin_num, destination_num) to
 	 *         build the Coordinate Adjacency Matrix
 	 */
@@ -156,19 +188,20 @@ public class FlightAnalyser {
 	}
 	
 	/**
-	 * Returns all average of departure delays of flights for each route, ordered by descending of Average field,
+	 * Returns all Average Departure Delays of Flights for each route, ordered by descending of Average field,
 	 * disregarding Origin and Destination, with indexes (origin_num, destination_num) to
 	 * build the Coordinate Adjacency Matrix.
 	 * 
 	 * @param sqlContext the SQL Context to perform SQL Queries
-	 * @param data the data set of the flights read from the .CSV file
+	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
 	 * 
-	 * @return all average of departure delays of flights for each route, ordered by descending of Average field
+	 * @return all Average Departure Delays of Flights for each route, ordered by descending of Average field
 	 * 	       with indexes (origin_num, destination_num) to build the Coordinate Adjacency Matrix
 	 */
 	@SuppressWarnings("deprecation")
 	public static Dataset<Row> 
-			getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset(SQLContext sqlContext, Dataset<Row> flightsDataset) {
+			getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
+					(SQLContext sqlContext, Dataset<Row> flightsDataset) {
 		
 			Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset = 
 					 	flightsDataset.groupBy("origin_id", "destination_id")
@@ -203,8 +236,8 @@ public class FlightAnalyser {
 	 * 
 	 * @return the maximum number between the Origin and Destination IDs' count
 	 */
-	public static long getNumMaxBetweenOriginAndDestinationIDsCount(Dataset<Row> allOriginAirportsByIndexMap,
-																	   Dataset<Row> allDestinationAirportsByIndexMap) {
+	public static long getNumMaxBetweenOriginAndDestinationIDsCount
+			(Dataset<Row> allOriginAirportsByIndexMap, Dataset<Row> allDestinationAirportsByIndexMap) {
 		
 		Dataset<Row> originIDsCount = allOriginAirportsByIndexMap.groupBy("origin_id").count().orderBy("origin_id");
 		Dataset<Row> destinationIDsCount = allDestinationAirportsByIndexMap.groupBy("destination_id").count().orderBy("destination_id");
@@ -219,7 +252,7 @@ public class FlightAnalyser {
 	 * Returns the Map of All Origin Airports by Index
 	 * (to be used as row's index in Coordinate Adjacency Matrix).
 	 * 
-	 * @param flightsDataset the Dataset with information of all Flights
+	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
 	 * 
 	 * @return the Map of All Origin Airports by Index
 	 *         (to be used as row's index in Coordinate Adjacency Matrix)
@@ -237,7 +270,7 @@ public class FlightAnalyser {
 	 * Returns the Map of All Destination Airports by Index
 	 * (to be used as column's index in Coordinate Adjacency Matrix).
 	 * 
-	 * @param flightsDataset the Dataset with information of all Flights
+	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
 	 * 
 	 * @return the Map of All Destination Airports by Index
 	 *         (to be used as column's index in Coordinate Adjacency Matrix)
@@ -303,20 +336,20 @@ public class FlightAnalyser {
 	 * Returns a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
 	 * of mappings between Airport Origin's ID and the a tuple containing other two tuples:
 	 * - (row's index, column's index) of the Adjacency Coordinate Matrix
-	 * - (Airport Destination's ID, Average of Delays of the Flights between that two Airports) 
+	 * - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
 	 * 
 	 * @param allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
-	 *        the Dataset (built of Rows) containing all average of departure delays of flights for each route,
+	 *        the Dataset (built of Rows) containing all Average Departure Delays of Flights for each route,
 	 *        ordered by descending of Average field, disregarding Origin and Destination
 	 * 
 	 * @return a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
 	 * 		   of mappings between Airport Origin's ID and the a tuple containing other two tuples:
 	 *         - (row's index, column's index) of the Adjacency Coordinate Matrix
-	 *         - (Airport Destination's ID, Average of Delays of the Flights between that two Airports)
+	 *         - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports)
 	 */
 	public static JavaPairRDD<Long, Tuple2<Tuple2<Long, Long>, Tuple2<Long, Double>>> 
-		getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD(
-				Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset) {
+			getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD
+					(Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset) {
 		
 		JavaRDD<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationJavaRDD = 
 								allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.orderBy("origin_id").javaRDD();
@@ -349,8 +382,22 @@ public class FlightAnalyser {
 		return averageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD;
 	}
 	
+	/**
+	 * Returns a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
+	 * of mappings between Airport Origin's ID and the a tuple containing:
+	 * - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
+	 * 
+	 * @param allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
+	 * 		  the Dataset (built of Rows) containing all Average Departure Delays of Flights for each route,
+	 *        ordered by descending of Average field, disregarding Origin and Destination
+	 * 
+	 * @return a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
+	 * 		   of mappings between Airport Origin's ID and the a tuple containing:
+	 * 		   - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
+	 */
 	public static JavaPairRDD<Long, Tuple2<Long, Double>> 
-		getAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationJavaPairRDD(Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset) {
+			getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationJavaPairRDD
+					(Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset) {
 		
 		JavaRDD<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationJavaRDD = 
 									allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.orderBy("origin_id").javaRDD();
@@ -381,6 +428,19 @@ public class FlightAnalyser {
 		return averageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationJavaPairRDD;
 	}
 	
+	/**
+	 * Returns a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
+	 * of mappings between Airport Origin's ID and an iterable tuple containing:
+	 * - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
+	 * 
+	 * @param allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
+	 * 		  the Dataset (built of Rows) containing all Average Departure Delays of Flights for each route,
+	 *        ordered by descending of Average field, disregarding Origin and Destination
+	 * 
+	 * @return a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
+	 * 		   of mappings between Airport Origin's ID and an iterable tuple containing:
+	 * 		   - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
+	 */
 	public static JavaPairRDD<Long, Iterable<Tuple2<Long, Double>>> 
 		getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationGroupByKeyOriginJavaPairRDD(Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset) {
 		
@@ -392,10 +452,13 @@ public class FlightAnalyser {
 						new PairFunction<Row, Long, Tuple2 <Long, Double> > () {
 
 							/**
-							 * 
+							 * The default serial version UID
 							 */
 							private static final long serialVersionUID = 1L;
 		 
+							/**
+							 * The call method to perform the map for each tuple/pair
+							 */
 							@Override
 							public Tuple2<Long, Tuple2<Long, Double>> call(Row row) throws Exception {
 		
@@ -410,6 +473,21 @@ public class FlightAnalyser {
 		return averageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationJavaPairRDD.groupByKey().sortByKey();
 	}
 	
+	/**
+	 * Returns the Adjacency Matrix (Coordinate Matrix) to represent the Graph of
+	 * Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
+	 * containing the Vertexes (Airports) and its weights (Average Departure Delays).
+	 * 
+	 * @param sqlContext sqlContext the SQL Context to perform SQL Queries
+	 * @param originAirportsByIndexMap the Map of All Origin Airports by Index (matrix's rows)
+	 * @param destinationAirportsByIndexMap the Map of All Destination Airports by Index (matrix's columns)
+	 * @param averageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD
+	 * @param matrixDimensions the dimensions of the Adjacency Matrix (Coordinate Matrix)
+	 * 
+	 * @return the Adjacency Matrix (Coordinate Matrix) to represent the Graph of
+	 * 		   Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
+	 *         containing the Vertexes (Airports) and its weights (Average Departure Delays)
+	 */
 	public static CoordinateMatrix buildCoordinateAdjacencyMatrix
 										(SQLContext sqlContext,
 										 Dataset<Row> originAirportsByIndexMap,
@@ -423,13 +501,16 @@ public class FlightAnalyser {
 				new Function<Tuple2< Long, Tuple2<Tuple2<Long, Long>, Tuple2<Long, Double>> >, MatrixEntry>() {
 
 					/**
-					 * 
+					 * The default serial version UID
 					 */
 					private static final long serialVersionUID = 1L;
 
+					/**
+					 * The call method to perform the map for each tuple/pair
+					 */
 					@Override
-					public MatrixEntry call(Tuple2<Long, Tuple2<Tuple2<Long, Long>, Tuple2<Long, Double>>> tuple)
-							throws Exception {
+					public MatrixEntry call(Tuple2<Long, Tuple2<Tuple2<Long, Long>, Tuple2<Long, Double>>> tuple) throws Exception {
+						
 						long row = tuple._2()._1()._1();
 						long col = tuple._2()._1()._2();
 						
@@ -446,28 +527,7 @@ public class FlightAnalyser {
 	}
 	
 	/**
-	 * Returns the average of arrival delays of flights for each route, ordered by descending of Average field.
-	 * 
-	 * @param data the data set of the flights read from the .CSV file
-	 * 
-	 * @return the average of arrival delays of flights for each route, ordered by descending of Average field
-	 */
-	@SuppressWarnings("deprecation")
-	public static Dataset<Row> arrivalDelaysAverageForEachRouteByDescAvg(Dataset<Row> data) {
-		 Dataset<Row> result = data.select("origin", "dest", "arrival_delay")
-				 				   .where(data.col("arrival_delay").$bang$eq$eq(0.0));
-		 
-		 result = result.groupBy("origin", "dest").avg("arrival_delay");
-		 
-		 result.printSchema();
-		 
-		 result = result.sort(functions.desc("avg(arrival_delay)"));
-		 		 		 
-		 return result;
-	}	
-	
-	/**
-	 * Main method to process the flights' file and analyze it.
+	 * Main method to process the flights' file and analyse it.
 	 * 
 	 * @param args the file of flights to process
 	 *        (if no args, uses the file flights.csv, by default)
@@ -508,7 +568,7 @@ public class FlightAnalyser {
 		// Printing the information (for debug) 
 
 		// All the information about the Flights,
-		// organized by the corresponding fields
+		// organised by the corresponding fields
 		for(Row flightsInfoRow : flightsInfo.collectAsList())
 			System.out.println(flightsInfoRow);
 		
@@ -517,40 +577,60 @@ public class FlightAnalyser {
 		
 		
 		// The Dataset (built of Rows), containing All Average Departure Delays of the Flights Between Any Two Airports
-		Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset = getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset(flightsInfo);
+		Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset = getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset(flightsInfo).cache();
 		
 		// Printing the information (for debug) 
+		
+		// All the information about All Average Departure Delays of the Flights Between Any Two Airports,
+		// organised by the corresponding fields 
 		System.out.println("The Number of Rows/Entries in the Dataset of All Average Delays Of The Flights Between Any Two Airports:");
 		System.out.println("- " + allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset.count());
 		
 		System.out.println();
 		
-		// All the information about All Average Departure Delays of the Flights Between Any Two Airports,
-		// organized by the corresponding fields
 		for(Row allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsRow : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDataset.collectAsList())
 			System.out.println(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsRow);
 		
 		System.out.println();
 		System.out.println();
 		
+		
+		// The Dataset (built of Rows), containing All Average Departure Delays of the Flights Between Any Airports
+		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields
 		Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
-				getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset(sqlContext, flightsInfo);
+				getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset(sqlContext, flightsInfo).cache();
+
+		// Printing the information (for debug)
 		
+		// The information about all Average Departure Delays of the Flights Between Any Two Airports,
+		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields
+		System.out.println("The Number of Rows/Entries in the Dataset of All Average Departure Delays Of The Flights Between Any Two Airports, Disregarding Origin and Destination:");
+		System.out.println("- " + allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.count());
 		
-		// The Dataset (built of Rows), containing All Average Departure Delays of the Flights Between Any Airports,
-		// disregarding Origin and Destination Airports with Indexes, organized by the corresponding fields
-		// with indexes (origin_num, destination_num) build the Coordinate Adjacency Matrix
+		System.out.println();
+		
+		for(Row allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesRow : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.collectAsList())
+			System.out.println(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesRow);
+		
+		// The Dataset (built of Rows), containing all Average Departure Delays of the Flights Between Any Airports
+		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields
+		// with Indexes (origin_num, destination_num) to build the Coordinate Adjacency Matrix
 		Dataset<Row> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset = 
-				getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset(sqlContext, flightsInfo);
+				getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset(sqlContext, flightsInfo).cache();
+
+		// Printing the information (for debug)
 		
-		System.out.println("The Number of Rows/Entries in the Dataset of All Average Delays Of The Flights Between Any Two Airports, Disregarding Origin and Destination");
+		// The information about all Average Departure Delays of the Flights Between Any Two Airports,
+		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields
+		// with indexes (origin_num, destination_num) build the Coordinate Adjacency Matrix
+		System.out.println("The Number of Rows/Entries in the Dataset of All Average Departure Delays Of The Flights Between Any Two Airports, Disregarding Origin and Destination");
 		System.out.println("[ with indexes (origin_num, destination_num) build the Coordinate Adjacency Matrix ]:");
 		System.out.println("- " + allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset.count());
 		
 		System.out.println();
 		
-		// All the information about All Average Departure Delays of the Flights Between Any Two Airports,
-		// disregarding Origin and Destination Airports with Indexes, organized by the corresponding fields
+		// The information about all Average Departure Delays of the Flights Between Any Two Airports,
+		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields
 		// with indexes (origin_num, destination_num) build the Coordinate Adjacency Matrix
 		for(Row allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesRow : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset.collectAsList())
 			System.out.println(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesRow);
@@ -558,64 +638,130 @@ public class FlightAnalyser {
 		System.out.println();
 		System.out.println();
 		
+		
+		// The Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
+		// of mappings between Airport Origin's ID and an iterable tuple containing:
+		// - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports)
 		JavaPairRDD<Long, Iterable<Tuple2<Long, Double>>> allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationGroupByKeyOriginJavaPairRDD = 
 				getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationGroupByKeyOriginJavaPairRDD
-						(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset);
+						(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset).cache();
 		
-		for (Entry<Long, Iterable<Tuple2<Long, Double>>> entry : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationGroupByKeyOriginJavaPairRDD.collectAsMap().entrySet()) {
-		    System.out.println("Average Delays Of The Flights From Origin ID: " + entry.getKey());
+		// The information about all Average Departure Delays of the Flights Between Any Two Airports,
+		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields,
+		// grouped by Key (origin_id) and associated to a collection of (destination_id, average_departure_delay)
+		for(Entry<Long, Iterable<Tuple2<Long, Double>>> tupleEntry : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationGroupByKeyOriginJavaPairRDD.collectAsMap().entrySet()) {
+		    System.out.println("Average Departure Delays Of The Flights From Origin ID: " + tupleEntry.getKey());
 		    
-		    Iterable<Tuple2<Long, Double>> c = entry.getValue();
+		    Iterable<Tuple2<Long, Double>> tupleOfDestinationIDAndAverageDepartureDelayIterable = tupleEntry.getValue();
 		    
-		    Iterator<Tuple2<Long, Double>> d = c.iterator();
+		    Iterator<Tuple2<Long, Double>> tupleOfDestinationIDAndAverageDepartureDelayIterator = 
+		    											tupleOfDestinationIDAndAverageDepartureDelayIterable.iterator();
 		    
-		    Tuple2<Long, Double> e;
+		    Tuple2<Long, Double> tupleOfDestinationIDAndAverageDepartureDelay;
 		    
-			while(d.hasNext()) {
-		    	e = d.next();
+			while(tupleOfDestinationIDAndAverageDepartureDelayIterator.hasNext()) {
+		    	tupleOfDestinationIDAndAverageDepartureDelay = tupleOfDestinationIDAndAverageDepartureDelayIterator.next();
 		    	
-		    	System.out.println("- (" + e._1() + ", " + e._2 + ");");
+		    	System.out.println("- (" + tupleOfDestinationIDAndAverageDepartureDelay._1() + ", " + tupleOfDestinationIDAndAverageDepartureDelay._2 + ");");
 			}
 			
 			System.out.println();
 			System.out.println();
 		}
 		
-		Dataset<Row> allOriginAirportsByIndexMap = mapAllOriginAirportsByIndex(flightsInfo);
-		Dataset<Row> allDestinationAirportsByIndexMap = mapAllDestinationAirportsByIndex(flightsInfo);
 		
-		for(Row r : allOriginAirportsByIndexMap.collectAsList())
-			System.out.println(r);
+		// The Map of all Origin Airports by Index
+		// (to be used as row's index in Coordinate Adjacency Matrix)
+		Dataset<Row> allOriginAirportsByIndexMap = mapAllOriginAirportsByIndex(flightsInfo).cache();
+		
+		// Printing the information (for debug) 
+		
+		// The information about the Map of all Origin Airports by Index
+		// (to be used as row's index in Coordinate Adjacency Matrix),
+		// organised by the corresponding fields 
+		for(Row allOriginAirportsByIndexMapRow : allOriginAirportsByIndexMap.collectAsList())
+			System.out.println(allOriginAirportsByIndexMapRow);
 		
 		System.out.println();
 		System.out.println();
 		
+		
+		// The Map of all Destination Airports by Index
+		// (to be used as column's index in Coordinate Adjacency Matrix)
+		Dataset<Row> allDestinationAirportsByIndexMap = mapAllDestinationAirportsByIndex(flightsInfo).cache();
+		
+		
+		// Printing the information (for debug) 
+		
+		// The information about the Map of all Destination Airports by Index
+		// (to be used as column's index in Coordinate Adjacency Matrix),
+		// organised by the corresponding fields 
+		for(Row allOriginAirportsByIndexMapRow : allOriginAirportsByIndexMap.collectAsList())
+			System.out.println(allOriginAirportsByIndexMapRow);
+		
+		System.out.println();
+		System.out.println();
+		
+		
+		// The Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
+		// of mappings between Airport Origin's ID and a tuple containing other two tuples:
+		// - (row's index, column's index) of the Adjacency Coordinate Matrix
+		// - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports)
 		JavaPairRDD<Long, Tuple2<Tuple2<Long, Long>, Tuple2<Long, Double>>> 
 				allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD = 
 						getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD
-								(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset);
+								(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset).cache();
 		
-		for(Row r : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset.collectAsList())
-			System.out.println(r);
 		
-		long numMaxBetweenOriginIDsAndDestinationIDsCount = getNumMaxBetweenOriginAndDestinationIDsCount(allOriginAirportsByIndexMap,
-				                                                                                            allDestinationAirportsByIndexMap);
+		// Printing the information (for debug) 
 		
+		// The information about the mappings between Airport Origin's ID and a tuple containing other two tuples:
+		// - (row's index, column's index) of the Adjacency Coordinate Matrix
+		// - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports)
+		// This information will be organised by the corresponding fields (Disregarding Airport's Origin and Destination)
+		for(Row allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesRow : allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset.collectAsList())
+			System.out.println(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesRow);
+		
+		System.out.println();
+		System.out.println();
+		
+		// The maximum number between the Origin and Destination IDs (to be used as the dimensions of Coordinate Adjacency Matrix)
+		long numMaxBetweenOriginAndDestinationIDsCount = getNumMaxBetweenOriginAndDestinationIDsCount
+															(allOriginAirportsByIndexMap, allDestinationAirportsByIndexMap);
+		
+		// The Adjacency Matrix (Coordinate Matrix) to represent the Graph of
+		// Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
+		// containing the Vertexes (Airports) and its weights (Average Departure Delays)
 		CoordinateMatrix coordinateAdjacencyMatrix = 
 				 buildCoordinateAdjacencyMatrix
 				 				(sqlContext, allOriginAirportsByIndexMap, allDestinationAirportsByIndexMap,
 				 				 allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD,
-				 				 numMaxBetweenOriginIDsAndDestinationIDsCount);
+				 				 numMaxBetweenOriginAndDestinationIDsCount);
 				 	
-		JavaRDD<MatrixEntry> dsfsdg = coordinateAdjacencyMatrix.entries().toJavaRDD();
+		// The Java RDD containing all the Matrix Entries of
+		// the Adjacency Matrix (Coordinate Matrix) to represent the Graph of
+		// Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
+		// containing the Vertexes (Airports) and its weights (Average Departure Delays)
+		JavaRDD<MatrixEntry> matrixEntryJavaRDD = coordinateAdjacencyMatrix.entries().toJavaRDD().cache();
 		
-		List<MatrixEntry> gdsg = dsfsdg.collect();
+		// The list containing all the Matrix Entries of
+		// the Adjacency Matrix (Coordinate Matrix) to represent the Graph of
+		// Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
+		// containing the Vertexes (Airports) and its weights (Average Departure Delays)
+		List<MatrixEntry> matrixEntryList = matrixEntryJavaRDD.collect();
+		
+		
+		// Printing the information (for debug) 
+		
+		// The information about all the Matrix Entries of
+		// the Adjacency Matrix (Coordinate Matrix) to represent the Graph of
+		// Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
+		// containing the Vertexes (Airports) and its weights (Average Departure Delays)
+		for(MatrixEntry matrixEntry : matrixEntryList)
+			System.out.println("(" + matrixEntry.i() + "," + matrixEntry.j() + ") = " + matrixEntry.value());
 		
 		System.out.println();
-		
-		for(MatrixEntry aaa : gdsg) {
-			System.out.println("(" + aaa.i() + "," + aaa.j() + ") = " + aaa.value());
-		}
+		System.out.println();
 		
 		// Terminate the Spark Session
 		sparkSession.stop();
