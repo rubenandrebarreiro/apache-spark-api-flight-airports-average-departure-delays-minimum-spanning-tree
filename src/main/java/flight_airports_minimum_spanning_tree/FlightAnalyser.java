@@ -10,7 +10,7 @@ package flight_airports_minimum_spanning_tree;
 * Integrated Master of Computer Science and Engineering
 * Faculty of Science and Technology of New University of Lisbon
 *
-* Description/Steps of operations performed by the GPU CUDA's Kernels:
+* Description/Steps of operations performed by the Apache Spark's API:
 * - Build an Undirected Graph to represent the Average Departure Delay of the Flights between any two Airports
 *   (the Average Departure Delays must consider all Flights between the both Airports, disregarding the origin and the destination).
 *   The Graph's nodes are thus the Airports, and the edges represent direct routes between Airports,
