@@ -79,6 +79,11 @@ public class FlightAnalyser {
 
 	private static final String DefaulftFile = "data/flights.csv";
 	
+	
+	private static long lastVertex;
+	private static int nextLastVertex;
+	
+	
 	// IMPLEMENTATION STEPS
 	
 	// 1. Build an Undirected Graph to represent the Average Departure Delay of the Flights between any two Airports
@@ -609,7 +614,7 @@ public class FlightAnalyser {
 	}
 	
 	
-	public static void computeMinimumSpanningTree(SparkSession sparkSession, SQLContext sqlContext,
+	public static JavaPairRDD<Integer, Tuple2<Integer, Double>> computeMinimumSpanningTreeJavaPairRDD(SparkSession sparkSession, SQLContext sqlContext,
 												  JavaRDD<Integer> allAiportIndexesRDD,
 												  CoordinateMatrix coordinateAdjacencyMatrix,
 												  long numAllAirports) {  
@@ -649,7 +654,7 @@ public class FlightAnalyser {
 		
 		// The array to keep all the distances from the root of
 		// the Minimum Spanning Tree (M.S.T.), initialised as INFINITE
-		JavaPairRDD<Integer, Double> distancesJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Double>(index, Double.MAX_VALUE)).cache();
+		JavaPairRDD<Integer, Tuple2<Integer, Double>> distancesJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Tuple2<Integer, Double>>(index, new Tuple2<Integer, Double>(-1, Double.MAX_VALUE))).cache();
 	 
 		// The array to represent and keep the set of
 		// vertices already yet included in Minimum Spanning Tree (M.S.T.),
@@ -658,7 +663,7 @@ public class FlightAnalyser {
 		
 		// The position of the root it's initialised with the distance of 0 (ZERO)
 		// to build the Minimum Spanning Tree (M.S.T.)
-		distancesJavaPairRDD = distancesJavaPairRDD.mapToPair(new PairFunction<Tuple2<Integer, Double>, Integer, Double>() {
+		distancesJavaPairRDD = distancesJavaPairRDD.mapToPair(new PairFunction<Tuple2<Integer, Tuple2<Integer, Double>>, Integer, Tuple2<Integer, Double>>() {
 
 			/**
 			 * The default serial version UID
@@ -669,12 +674,12 @@ public class FlightAnalyser {
 			 * 
 			 */
 			@Override
-			public Tuple2<Integer, Double> call(Tuple2<Integer, Double> distancePair) throws Exception {
+			public Tuple2<Integer, Tuple2<Integer, Double>> call(Tuple2<Integer, Tuple2<Integer, Double>> distancePair) throws Exception {
 				if(distancePair._1() == (int) initialVertex) {
-					return new Tuple2<Integer, Double>(distancePair._1(), 0.0);
+					return new Tuple2<Integer, Tuple2<Integer, Double>>(distancePair._1(), new Tuple2<Integer, Double>(distancePair._1(), 0.0));
 				}
 				else {
-					return new Tuple2<Integer, Double>(distancePair._1(), distancePair._2());
+					return new Tuple2<Integer, Tuple2<Integer, Double>>(distancePair._1(), new Tuple2<Integer, Double>(distancePair._2()._1(), distancePair._2()._2()));
 				}
 			}
 		}).cache();
@@ -723,8 +728,8 @@ public class FlightAnalyser {
 		 * Just for debug:
 		 * - The content of the vector of minimum distances from the origin
 		 */
-		for(Tuple2<Integer, Double> distanceTuple : distancesJavaPairRDD.collect()) {
-			System.out.println(distanceTuple._1() + " -> " + distanceTuple._2());
+		for(Tuple2<Integer, Tuple2<Integer, Double>> distanceTuple : distancesJavaPairRDD.collect()) {
+			System.out.println(distanceTuple._1() + " -> " + distanceTuple._2()._1() + " = " + distanceTuple._2()._2());
 		}
 		
 		/**
@@ -752,7 +757,8 @@ public class FlightAnalyser {
 		
 		StructType distancesDatasetSchema = DataTypes.createStructType(new StructField[] {
 	            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
-	            DataTypes.createStructField("distance", DataTypes.DoubleType, true)
+	            DataTypes.createStructField("distance", DataTypes.DoubleType, true),
+	            DataTypes.createStructField("from_index",  DataTypes.IntegerType, true)
 	    });
 		
 		Dataset<Row> distancesDataset = sparkSession.createDataFrame(distancesJavaRDD, distancesDatasetSchema).cache();
@@ -790,7 +796,8 @@ public class FlightAnalyser {
 		
 		distancesDataset = distancesDataset.join(directPathsFromInitialVertexDataset.select("destination_index", "distance"),
 											distancesDataset.col("index")
-											.equalTo(directPathsFromInitialVertexDataset.col("destination_index")), "left").sort(functions.asc("index"))
+											.equalTo(directPathsFromInitialVertexDataset.col("destination_index")), "left")
+											.sort(functions.asc("index"))
 											.cache();
 		
 		distancesDataset = distancesDataset.map(new MapFunction<Row, Row>() {
@@ -806,10 +813,10 @@ public class FlightAnalyser {
 			@Override
 			public Row call(Row distancesDatasetRow) throws Exception {
 				if(distancesDatasetRow.get(3) == null) {
-					return RowFactory.create(distancesDatasetRow.get(0), distancesDatasetRow.get(1));
+					return RowFactory.create(distancesDatasetRow.get(0), distancesDatasetRow.get(1), -1);
 				}
 				else {
-					return RowFactory.create(distancesDatasetRow.get(0), distancesDatasetRow.get(3));
+					return RowFactory.create(distancesDatasetRow.get(0), distancesDatasetRow.get(3), distancesDatasetRow.get(4));
 				}
 			}
 		},
@@ -823,10 +830,15 @@ public class FlightAnalyser {
 		
 		Dataset<Row> distancesVisitedDataset = distancesDataset.join(visitedDataset.select("index", "distance"),
 																distancesDataset.col("index")
-															   .equalTo(visitedDataset.col("index")), "left").select("index", "distance", "visited").sort(functions.asc("index"))
+															   .equalTo(visitedDataset.col("index")), "left").select("index", "distance", "visited", "index_from")
+															   .sort(functions.asc("index"))
 															   .cache();
 		
-		int numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true)).groupBy("visited").count().rdd().first().getLong(1);
+		lastVertex = initialVertex;
+		nextLastVertex = -1;
+		
+		int numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true))
+															  .groupBy("visited").count().rdd().first().getLong(1);
 		
 		System.out.println(numVisitedAirports);
 		
@@ -869,8 +881,9 @@ public class FlightAnalyser {
 				}
 			});
 			
-			Dataset<Row> minInDistancesVisitedDataset = distancesVisitedDataset.select("index").where(distancesVisitedDataset.col("index").$eq$eq$eq(minDistanceVisitedDataset.get(0)));
-			
+			Dataset<Row> minInDistancesVisitedDataset = distancesVisitedDataset.select("index")
+																			   .where(distancesVisitedDataset.col("index").$eq$eq$eq((int) minDistanceVisitedDataset.getInt(0)));
+				
 			distancesVisitedDataset = distancesVisitedDataset.map(new MapFunction<Row, Row>() {
 
 				/**
@@ -884,20 +897,50 @@ public class FlightAnalyser {
 				@Override
 				public Row call(Row distancesVisitedDatasetRow) throws Exception {
 					
-					
 					if(!minInDistancesVisitedDataset.isEmpty()) {
-						
 						Row minInDistancesVisitedDatasetRow = minInDistancesVisitedDataset.first();
 						
-						return RowFactory.create(minInDistancesVisitedDatasetRow.getInt(0), minInDistancesVisitedDatasetRow.getDouble(1), true);
+						nextLastVertex = minInDistancesVisitedDatasetRow.getInt(0);
+						
+						Row nextRowToBeVisitedAndChanged = RowFactory.create(nextLastVertex, minInDistancesVisitedDatasetRow.getDouble(1), true, lastVertex);
+						
+						lastVertex = nextLastVertex;
+						
+						return nextRowToBeVisitedAndChanged;
 					}
 					else {
-						return RowFactory.create(distancesVisitedDatasetRow.getInt(0), distancesVisitedDatasetRow.getDouble(1), distancesVisitedDatasetRow.getBoolean(2));
+						return RowFactory.create(distancesVisitedDatasetRow.getInt(0), distancesVisitedDatasetRow.getDouble(1),
+												 distancesVisitedDatasetRow.getBoolean(2), distancesVisitedDatasetRow.getInt(3));
 					}
 				}
 			},
 			RowEncoder.apply(visitedDatasetSchema)).cache();
+			
+			
+			numVisitedAirports = (int) distancesVisitedDataset.select("visited")
+															  .where(distancesVisitedDataset.col("visited").$eq$eq$eq(true))
+															  .groupBy("visited").count().rdd().first().getLong(1);
 		}
+		
+		JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTree = distancesVisitedDataset.javaRDD().mapToPair(
+				new PairFunction<Row, Integer, Tuple2<Integer, Double>> () {
+					
+				/**
+				 * The default serial version UID
+				 */
+				private static final long serialVersionUID = 1L;
+
+				/**
+				 * 
+				 */
+				@Override
+				public Tuple2<Integer, Tuple2<Integer, Double>> call(Row row) throws Exception {
+					return new Tuple2<Integer, Tuple2<Integer, Double>>(row.getInt(3), new Tuple2<Integer, Double>(row.getInt(0), row.getDouble(1)));
+				}
+			}
+		);
+		
+		return minimumSpanningTree;
 	}
 	
 	public static JavaRDD<MatrixEntry> computeMinimumSpanningTreeComplement(JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTree,
@@ -974,12 +1017,13 @@ public class FlightAnalyser {
 		JavaPairRDD<Integer, Double> sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD = 
 				minimumSpanningTreeComplementJavaPairRDD.reduceByKey((departureDelay1, departureDelay2) -> departureDelay1 + departureDelay2).cache();
 			
-		Tuple2<Integer, Double> bottleneckAirportFromMinimumSpanningTreeComplementTuple = sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD.max(new Comparator<Tuple2<Integer, Double>>() {
+		Tuple2<Integer, Double> bottleneckAirportFromMinimumSpanningTreeComplementTuple = 
+			sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD.max(new Comparator<Tuple2<Integer, Double>>() {
 
-			@Override
-			public int compare(Tuple2<Integer, Double> tuple1, Tuple2<Integer, Double> tuple2) {
-				return tuple1._2() > tuple2._2() ? 1 : -1;
-			}
+				@Override
+				public int compare(Tuple2<Integer, Double> tuple1, Tuple2<Integer, Double> tuple2) {
+					return tuple1._2() > tuple2._2() ? 1 : -1;
+				}
 		});
 		
 		return bottleneckAirportFromMinimumSpanningTreeComplementTuple;
@@ -1291,7 +1335,10 @@ public class FlightAnalyser {
 		
 		JavaRDD<Integer> allAirportsIndexesJavaRDD = allAirportsByIndexMap.select("index").javaRDD().map(x -> x.getInt(0));
 		
-		computeMinimumSpanningTree(sparkSession, sqlContext, allAirportsIndexesJavaRDD, coordinateAdjacencyMatrix, numAllAirports);
+		JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTreeJavaPairRDD = computeMinimumSpanningTreeJavaPairRDD(sparkSession, sqlContext, allAirportsIndexesJavaRDD, coordinateAdjacencyMatrix, numAllAirports);
+		for(Tuple2<Integer, Tuple2<Integer, Double>> minimumSpanningTreePair : minimumSpanningTreeJavaPairRDD.collect())
+			System.out.println("(" + minimumSpanningTreePair._1() + "," + minimumSpanningTreePair._2()._1() + ") = " + minimumSpanningTreePair._2()._2());
+		
 		
 		// Terminate the Spark Session
 		sparkSession.stop();
