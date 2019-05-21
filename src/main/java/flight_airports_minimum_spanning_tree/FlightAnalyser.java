@@ -821,83 +821,83 @@ public class FlightAnalyser {
 		for(Row row : distancesDataset.collectAsList())
 			System.out.println(row);
 		
-		Row minDistanceDataset = distancesDataset.reduce(new ReduceFunction<Row>() {
-
-			/**
-			 * The default serial version UID
-			 */
-			private static final long serialVersionUID = 1L;
-
-			/**
-			 * 
-			 */
-			@Override
-			public Row call(Row row1, Row row2) throws Exception {
-				
-				double distance1 = row1.getDouble(1);
-				double distance2 = row2.getDouble(1);
-				
-				if(distance1 < distance2) {
-					return row1;
-				}
-				else {		
-					return row2;
-				}
-			}
-		});
+		Dataset<Row> distancesVisitedDataset = distancesDataset.join(visitedDataset.select("index", "distance"),
+																distancesDataset.col("index")
+															   .equalTo(visitedDataset.col("index")), "left").select("index", "distance", "visited").sort(functions.asc("index"))
+															   .cache();
 		
-		visitedDataset = visitedDataset.map(new MapFunction<Row, Row>() {
-
-			/**
-			 * The default serial version UID
-			 */
-			private static final long serialVersionUID = 1L;
-
-			/**
-			 * 
-			 */
-			@Override
-			public Row call(Row visitedDatasetRow) throws Exception {
-				if(visitedDatasetRow.get(0) == minDistanceDataset.get(0)) {
-					return RowFactory.create(visitedDatasetRow.get(0), true);
-				}
-				else {
-					return RowFactory.create(visitedDatasetRow.get(0), visitedDatasetRow.get(1));
-				}
-			}
-		},
-		RowEncoder.apply(visitedDatasetSchema)).cache();
-		
-		int numVisitedAirports = (int) visitedDataset.select("visited").where(visitedDataset.col("visited").$eq$eq$eq(true)).groupBy("visited").count().rdd().first().getLong(1);
+		int numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true)).groupBy("visited").count().rdd().first().getLong(1);
 		
 		System.out.println(numVisitedAirports);
 		
-		/*
-	    // The MST will have V vertices 
-	    for (int count = 0; count < V-1; count++) 
-	    { 
-	        // Pick the minimum key vertex from the  
-	        // set of vertices not yet included in MST 
-	        int u = minKey(key, mstSet); 
-	  
-	        // Add the picked vertex to the MST Set 
-	        mstSet[u] = true; 
-	  
-	        // Update key value and parent index of  
-	        // the adjacent vertices of the picked vertex.  
-	        // Consider only those vertices which are not  
-	        // yet included in MST 
-	        for (int v = 0; v < V; v++) 
-	  
-	        // graph[u][v] is non zero only for adjacent vertices of m 
-	        // mstSet[v] is false for vertices not yet included in MST 
-	        // Update the key only if graph[u][v] is smaller than key[v] 
-	        if (graph[u][v] && mstSet[v] == false && graph[u][v] < key[v]) 
-	            parent[v] = u, key[v] = graph[u][v]; 
-	    }
-	    */ 
-		
-		
+		while(numVisitedAirports < numAllAirports) {
+			
+			Row minDistanceVisitedDataset = distancesVisitedDataset.reduce(new ReduceFunction<Row>() {
+
+				/**
+				 * The default serial version UID
+				 */
+				private static final long serialVersionUID = 1L;
+
+				/**
+				 * 
+				 */
+				@Override
+				public Row call(Row row1, Row row2) throws Exception {
+					
+					double distance1 = row1.getDouble(1);
+					double distance2 = row2.getDouble(1);
+					
+					boolean visited1 = row1.getBoolean(2);
+					boolean visited2 = row2.getBoolean(2);
+					
+					if(!visited1 && !visited2 ) {
+						if(distance1 < distance2) {
+							
+							return row1;
+						}
+						else {		
+							return row2;
+						}
+					}
+					else if(visited1) {
+						return row2;
+					}
+					else {
+						return row1;
+					}
+				}
+			});
+			
+			Dataset<Row> minInDistancesVisitedDataset = distancesVisitedDataset.select("index").where(distancesVisitedDataset.col("index").$eq$eq$eq(minDistanceVisitedDataset.get(0)));
+			
+			distancesVisitedDataset = distancesVisitedDataset.map(new MapFunction<Row, Row>() {
+
+				/**
+				 * The default serial version UID
+				 */
+				private static final long serialVersionUID = 1L;
+
+				/**
+				 * 
+				 */
+				@Override
+				public Row call(Row distancesVisitedDatasetRow) throws Exception {
+					
+					
+					if(!minInDistancesVisitedDataset.isEmpty()) {
+						
+						Row minInDistancesVisitedDatasetRow = minInDistancesVisitedDataset.first();
+						
+						return RowFactory.create(minInDistancesVisitedDatasetRow.getInt(0), minInDistancesVisitedDatasetRow.getDouble(1), true);
+					}
+					else {
+						return RowFactory.create(distancesVisitedDatasetRow.getInt(0), distancesVisitedDatasetRow.getDouble(1), distancesVisitedDatasetRow.getBoolean(2));
+					}
+				}
+			},
+			RowEncoder.apply(visitedDatasetSchema)).cache();
+		}
 	}
 	
 	public static JavaRDD<MatrixEntry> computeMinimumSpanningTreeComplement(JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTree,
