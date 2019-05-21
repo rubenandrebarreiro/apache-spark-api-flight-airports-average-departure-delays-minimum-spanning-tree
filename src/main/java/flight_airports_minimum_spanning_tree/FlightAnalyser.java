@@ -757,8 +757,8 @@ public class FlightAnalyser {
 		
 		StructType distancesDatasetSchema = DataTypes.createStructType(new StructField[] {
 	            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
-	            DataTypes.createStructField("distance", DataTypes.DoubleType, true),
-	            DataTypes.createStructField("from_index",  DataTypes.IntegerType, true)
+	            DataTypes.createStructField("from_index",  DataTypes.IntegerType, true),
+	            DataTypes.createStructField("distance", DataTypes.DoubleType, true)
 	    });
 		
 		Dataset<Row> distancesDataset = sparkSession.createDataFrame(distancesJavaRDD, distancesDatasetSchema).cache();
@@ -830,7 +830,7 @@ public class FlightAnalyser {
 		
 		Dataset<Row> distancesVisitedDataset = distancesDataset.join(visitedDataset.select("index", "distance"),
 																distancesDataset.col("index")
-															   .equalTo(visitedDataset.col("index")), "left").select("index", "distance", "visited", "index_from")
+															   .equalTo(visitedDataset.col("index")), "left").select("index", "index_from", "distance", "visited")
 															   .sort(functions.asc("index"))
 															   .cache();
 		
