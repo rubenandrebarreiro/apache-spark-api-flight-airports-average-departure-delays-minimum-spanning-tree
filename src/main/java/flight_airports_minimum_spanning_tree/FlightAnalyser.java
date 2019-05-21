@@ -44,32 +44,20 @@ package flight_airports_minimum_spanning_tree;
 */
 
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.ReduceFunction;
-import org.apache.spark.api.java.function.VoidFunction;
-import org.apache.spark.ml.linalg.DenseVector;
-import org.apache.spark.ml.linalg.Vectors;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import org.apache.spark.Partition;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaDoubleRDD;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.distributed.CoordinateMatrix;
-import org.apache.spark.mllib.linalg.distributed.IndexedRow;
 import org.apache.spark.mllib.linalg.distributed.MatrixEntry;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Dataset;
@@ -86,9 +74,6 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import scala.Tuple2;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
-import scala.reflect.ClassTag;
 
 public class FlightAnalyser {
 
@@ -110,11 +95,11 @@ public class FlightAnalyser {
 	// 2. Compute the Graph's Minimum Spanning Tree (M.S.T.) by
 	// implementing the parallel version of Prim's Algorithm (available from CLIP platform).
 	// The M.S.T. will be the subgraph of the original with the minimum total edge weight
-	// (sum of the Average Departure Delays). Output the M.S.T. and its total edge weight.
+	// (sum of the Average Departure Delays). Output the M.S.T. and its total edge weight. (PARTIALLY DONE - TODO verify)
 	
 	// 3. Identify the 'Bottleneck' Airport, i.e., the Airport with higher aggregated Average Departure Delay time
 	// (sum of the Average Departure Delays of all routes going out of the Airport)
-	// from the ones contained in the complement Graph of the M.S.T. previously computed.
+	// from the ones contained in the complement Graph of the M.S.T. previously computed. (DONE - TODO verify)
 	
 	// 4. Modify the Graph to reduce by a given factor the Average Departure Delay time of
 	// all routes going out of the selected airport.
@@ -618,7 +603,7 @@ public class FlightAnalyser {
 				}
 		);
 		
-		RDD<MatrixEntry> matrixEntriesRDD = matrixEntriesJavaRDD.rdd();
+		RDD<MatrixEntry> matrixEntriesRDD = matrixEntriesJavaRDD.rdd().cache();
 		
 		return new CoordinateMatrix(matrixEntriesRDD, matrixDimensions, matrixDimensions);
 	}
@@ -627,10 +612,10 @@ public class FlightAnalyser {
 	public static void computeMinimumSpanningTree(SparkSession sparkSession, SQLContext sqlContext,
 												  JavaRDD<Integer> allAiportIndexesRDD,
 												  CoordinateMatrix coordinateAdjacencyMatrix,
-												  long numAirports) {  
+												  long numAllAirports) {  
 	    
-		JavaRDD<MatrixEntry> coordinateAdjacencyMatrixEntriesJavaRDD = coordinateAdjacencyMatrix.entries().toJavaRDD();
-
+		JavaRDD<MatrixEntry> coordinateAdjacencyMatrixEntriesJavaRDD = coordinateAdjacencyMatrix.transpose().entries().toJavaRDD().cache();
+		
 		JavaRDD<MatrixEntry> initialVertexMatrixEntryJavaRDD = coordinateAdjacencyMatrixEntriesJavaRDD.filter(new Function<MatrixEntry, Boolean>() {
 			
 			/**
@@ -646,7 +631,7 @@ public class FlightAnalyser {
 			/**
 			 * 
 			 */
-			private final long initialVertexIndex = random.nextInt((int) (numAirports + 1L));
+			private final long initialVertexIndex = random.nextInt((int) (numAllAirports + 1L));
 			
 			/**
 			 * 		
@@ -655,8 +640,7 @@ public class FlightAnalyser {
 			public Boolean call(MatrixEntry matrixEntry) throws Exception {
 				return matrixEntry.i() == initialVertexIndex;
 			}
-			
-		});
+		}).cache();
 		
 		MatrixEntry initialVertexMatrixEntry = initialVertexMatrixEntryJavaRDD.first();
 		long initialVertex = initialVertexMatrixEntry.i();
@@ -665,12 +649,12 @@ public class FlightAnalyser {
 		
 		// The array to keep all the distances from the root of
 		// the Minimum Spanning Tree (M.S.T.), initialised as INFINITE
-		JavaPairRDD<Integer, Double> distancesJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Double>(index, Double.MAX_VALUE));
+		JavaPairRDD<Integer, Double> distancesJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Double>(index, Double.MAX_VALUE)).cache();
 	 
 		// The array to represent and keep the set of
 		// vertices already yet included in Minimum Spanning Tree (M.S.T.),
 		// initialised as FALSE
-		JavaPairRDD<Integer, Boolean> visitedJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Boolean>(index, false));
+		JavaPairRDD<Integer, Boolean> visitedJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Boolean>(index, false)).cache();
 		
 		// The position of the root it's initialised with the distance of 0 (ZERO)
 		// to build the Minimum Spanning Tree (M.S.T.)
@@ -693,7 +677,7 @@ public class FlightAnalyser {
 					return new Tuple2<Integer, Double>(distancePair._1(), distancePair._2());
 				}
 			}
-		});
+		}).cache();
 		
 		// The position of the root it's initialised as TRUE in
 		// the set of vertices already yet included in Minimum Spanning Tree (M.S.T.)
@@ -704,6 +688,9 @@ public class FlightAnalyser {
 			 */
 			private static final long serialVersionUID = 1L;
 
+			/**
+			 * 
+			 */
 			@Override
 			public Tuple2<Integer, Boolean> call(Tuple2<Integer, Boolean> distancePair) throws Exception {
 				if(distancePair._1() == (int) initialVertex) {
@@ -713,7 +700,7 @@ public class FlightAnalyser {
 					return new Tuple2<Integer, Boolean>(distancePair._1(), distancePair._2());
 				}
 			}
-		});
+		}).cache();
 		
 		JavaRDD<MatrixEntry> directPathsFromInitialVertexJavaRDD = coordinateAdjacencyMatrixEntriesJavaRDD.filter(new Function<MatrixEntry, Boolean>() {
 
@@ -730,7 +717,7 @@ public class FlightAnalyser {
 			public Boolean call(MatrixEntry matrixEntry) throws Exception {
 				return (matrixEntry.i() == initialVertex) ? true : false;
 			}
-		});
+		}).cache();
 		
 		/**
 		 * Just for debug:
@@ -751,7 +738,7 @@ public class FlightAnalyser {
 		JavaRDD<Row> directPathsFromInitialVertexRowJavaRDD = directPathsFromInitialVertexJavaRDD
 				.map(directPathsFromInitialVertexMatrixEntry -> RowFactory.create(new Object[] {(int) directPathsFromInitialVertexMatrixEntry.i(),
 																								(int) directPathsFromInitialVertexMatrixEntry.j(),
-																								directPathsFromInitialVertexMatrixEntry.value()}));
+																								directPathsFromInitialVertexMatrixEntry.value()})).cache();
 		
 		StructType directPathsFromInitialVertexDatasetSchema = DataTypes.createStructType(new StructField[] {
 				DataTypes.createStructField("origin_index",  DataTypes.IntegerType, true),
@@ -759,25 +746,25 @@ public class FlightAnalyser {
 	            DataTypes.createStructField("distance", DataTypes.DoubleType, true)
 	    });
 		
-		Dataset<Row> directPathsFromInitialVertexDataset = sparkSession.createDataFrame(directPathsFromInitialVertexRowJavaRDD, directPathsFromInitialVertexDatasetSchema);
+		Dataset<Row> directPathsFromInitialVertexDataset = sparkSession.createDataFrame(directPathsFromInitialVertexRowJavaRDD, directPathsFromInitialVertexDatasetSchema).cache();
 		
-		JavaRDD<Row> distancesJavaRDD = distancesJavaPairRDD.map(distanceJavaPair -> RowFactory.create(new Object[] {distanceJavaPair._1(), distanceJavaPair._2()}));
+		JavaRDD<Row> distancesJavaRDD = distancesJavaPairRDD.map(distanceJavaPair -> RowFactory.create(new Object[] {distanceJavaPair._1(), distanceJavaPair._2()})).cache();
 		
 		StructType distancesDatasetSchema = DataTypes.createStructType(new StructField[] {
 	            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
 	            DataTypes.createStructField("distance", DataTypes.DoubleType, true)
 	    });
 		
-		Dataset<Row> distancesDataset = sparkSession.createDataFrame(distancesJavaRDD, distancesDatasetSchema);
+		Dataset<Row> distancesDataset = sparkSession.createDataFrame(distancesJavaRDD, distancesDatasetSchema).cache();
 		
-		JavaRDD<Row> visitedJavaRDD = visitedJavaPairRDD.map(visitedJavaPair -> RowFactory.create(new Object[] {visitedJavaPair._1(), visitedJavaPair._2()}));
+		JavaRDD<Row> visitedJavaRDD = visitedJavaPairRDD.map(visitedJavaPair -> RowFactory.create(new Object[] {visitedJavaPair._1(), visitedJavaPair._2()})).cache();
 		
 		StructType visitedDatasetSchema = DataTypes.createStructType(new StructField[] {
 	            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
 	            DataTypes.createStructField("visited", DataTypes.BooleanType, true)
 	    });
 		
-		Dataset<Row> visitedDataset = sparkSession.createDataFrame(visitedJavaRDD, visitedDatasetSchema);
+		Dataset<Row> visitedDataset = sparkSession.createDataFrame(visitedJavaRDD, visitedDatasetSchema).cache();
 		
 		System.out.println();
 		System.out.println();
@@ -803,7 +790,8 @@ public class FlightAnalyser {
 		
 		distancesDataset = distancesDataset.join(directPathsFromInitialVertexDataset.select("destination_index", "distance"),
 											distancesDataset.col("index")
-											.equalTo(directPathsFromInitialVertexDataset.col("destination_index")), "left").sort(functions.asc("index"));
+											.equalTo(directPathsFromInitialVertexDataset.col("destination_index")), "left").sort(functions.asc("index"))
+											.cache();
 		
 		distancesDataset = distancesDataset.map(new MapFunction<Row, Row>() {
 
@@ -825,14 +813,13 @@ public class FlightAnalyser {
 				}
 			}
 		},
-		RowEncoder.apply(distancesDatasetSchema));
+		RowEncoder.apply(distancesDatasetSchema)).cache();
 		
 		System.out.println();
 		System.out.println();
 		
 		for(Row row : distancesDataset.collectAsList())
 			System.out.println(row);
-		
 		
 		Row minDistanceDataset = distancesDataset.reduce(new ReduceFunction<Row>() {
 
@@ -879,12 +866,13 @@ public class FlightAnalyser {
 				}
 			}
 		},
-		RowEncoder.apply(visitedDatasetSchema));
+		RowEncoder.apply(visitedDatasetSchema)).cache();
 		
+		int numVisitedAirports = (int) visitedDataset.select("visited").where(visitedDataset.col("visited").$eq$eq$eq(true)).groupBy("visited").count().rdd().first().getLong(1);
 		
+		System.out.println(numVisitedAirports);
 		
 		/*
-	    
 	    // The MST will have V vertices 
 	    for (int count = 0; count < V-1; count++) 
 	    { 
@@ -906,24 +894,101 @@ public class FlightAnalyser {
 	        // Update the key only if graph[u][v] is smaller than key[v] 
 	        if (graph[u][v] && mstSet[v] == false && graph[u][v] < key[v]) 
 	            parent[v] = u, key[v] = graph[u][v]; 
-	    } 
-	  
-	    // print the constructed MST 
-	    printMST(parent, V, graph);
-	    
+	    }
 	    */ 
+		
+		
 	}
 	
-	public static MatrixEntry getBottleneckAirport(Dataset<Row> complementMinimumSpanningTree, CoordinateMatrix coordinateAdjacencyMatrix, long numAirports) {
+	public static JavaRDD<MatrixEntry> computeMinimumSpanningTreeComplement(JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTree,
+																		    CoordinateMatrix coordinateAdjacencyMatrix) {
+
+		JavaRDD<MatrixEntry> minimumSpanningTreeComplementCoordinateAdjacencyMatrix = coordinateAdjacencyMatrix.entries().toJavaRDD().filter(new Function<MatrixEntry, Boolean>() {
+
+			/**
+			 * The default serial version UID
+			 */
+			private static final long serialVersionUID = 1L;
+
+			/**
+			 * 
+			 */
+			@Override
+			public Boolean call(MatrixEntry matrixEntry) throws Exception {
+				
+				JavaPairRDD<Integer, Tuple2<Integer, Double>> currentOriginVertexLinksInMinimumSpanningTree = 
+						minimumSpanningTree.filter(new Function<Tuple2<Integer, Tuple2<Integer, Double>>, Boolean>() {
+
+						/**
+						 * The default serial version UID
+						 */
+						private static final long serialVersionUID = 1L;
+						
+						/**
+						 * 
+						 */
+						@Override
+						public Boolean call(Tuple2<Integer, Tuple2<Integer, Double>> minimumSpanningTreeJavaPairRDD) throws Exception {
+							if(minimumSpanningTreeJavaPairRDD._1() == matrixEntry.i() && minimumSpanningTreeJavaPairRDD._2()._1() == matrixEntry.j()) {
+								return true;
+							}
+							else {
+								return false;
+							}
+						}					
+				});
+
+				if(!currentOriginVertexLinksInMinimumSpanningTree.isEmpty()) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+		});
 		
+		return minimumSpanningTreeComplementCoordinateAdjacencyMatrix;
+	}
+	
+	public static Tuple2<Integer, Double> getBottleneckAirportFromMinimumSpanningTreeComplementJavaRDD(JavaRDD<MatrixEntry> minimumSpanningTreeComplementJavaRDD) {
+
+		JavaPairRDD<Integer, Double> minimumSpanningTreeComplementJavaPairRDD = 
+			minimumSpanningTreeComplementJavaRDD.mapToPair(
+					new PairFunction<MatrixEntry, Integer, Double> () {
+
+						/**
+						 * The default serial version UID
+						 */
+						private static final long serialVersionUID = 1L;
+
+						/**
+						 * 
+						 */
+						@Override
+						public Tuple2<Integer, Double> call(MatrixEntry matrixEntry) throws Exception {
+							return new Tuple2<Integer, Double>((int) matrixEntry.i(), matrixEntry.value());
+						}
+					}
+			).cache();
 		
-		return null;
+		JavaPairRDD<Integer, Double> sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD = 
+				minimumSpanningTreeComplementJavaPairRDD.reduceByKey((departureDelay1, departureDelay2) -> departureDelay1 + departureDelay2).cache();
+			
+		Tuple2<Integer, Double> bottleneckAirportFromMinimumSpanningTreeComplementTuple = sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD.max(new Comparator<Tuple2<Integer, Double>>() {
+
+			@Override
+			public int compare(Tuple2<Integer, Double> tuple1, Tuple2<Integer, Double> tuple2) {
+				return tuple1._2() > tuple2._2() ? 1 : -1;
+			}
+		});
+		
+		return bottleneckAirportFromMinimumSpanningTreeComplementTuple;
 	}
 	
 	/**
 	 * Main method to process the flights' file and analyse it.
 	 * 
-	 * @param args the file of flights to process
+	 * @param args the file of flights to process and the reduce factor in the interval ]0,1[
 	 *        (if no args, uses the file flights.csv, by default)
 	 */
 	public static void main(String[] args) {
