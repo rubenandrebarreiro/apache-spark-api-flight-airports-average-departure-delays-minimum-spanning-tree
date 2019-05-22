@@ -79,8 +79,8 @@ public class FlightAnalyser {
 
 	private static final String DefaulftFile = "data/flights.csv";
 	
-	
-	private static long lastVertex;
+	private static Row minRowInDistancesVisitedDataset;
+	private static int lastVertex;
 	private static int nextLastVertex;
 	
 	
@@ -614,6 +614,62 @@ public class FlightAnalyser {
 	}
 	
 	
+	public static Row getMinRowInDistancesVisitedDataset(Dataset<Row> distancesVisitedDataset ) {
+		Row minDistanceVisitedDataset = distancesVisitedDataset.reduce(new ReduceFunction<Row>() {
+
+			/**
+			 * The default serial version UID
+			 */
+			private static final long serialVersionUID = 1L;
+
+			/**
+			 * 
+			 */
+			@Override
+			public Row call(Row row1, Row row2) throws Exception {
+				
+				double distance1 = row1.getDouble(2);
+				double distance2 = row2.getDouble(2);
+				
+				boolean visited1 = row1.getBoolean(3);
+				boolean visited2 = row2.getBoolean(3);
+				
+				if(!visited1 && !visited2) {
+					if(distance1 < distance2) {
+						return row1;
+					}
+					else {		
+						return row2;
+					}
+				}
+				else if(visited1) {
+					return row2;
+				}
+				else {
+					return row1;
+				}
+			}
+		});
+		
+		Dataset<Row> minInDistancesVisitedDataset = distancesVisitedDataset.select("index", "distance")
+																		   .where(distancesVisitedDataset.col("index").$eq$eq$eq(minDistanceVisitedDataset.getInt(0))).cache();
+		
+		if(!minInDistancesVisitedDataset.isEmpty()) {
+			
+			Row minInDistancesVisitedDatasetRow = minInDistancesVisitedDataset.first();
+			
+			nextLastVertex = minInDistancesVisitedDatasetRow.getInt(0);
+			
+			Row nextRowToBeVisitedAndChanged = RowFactory.create(nextLastVertex, lastVertex, minInDistancesVisitedDatasetRow.getDouble(1), true);
+			
+			lastVertex = nextLastVertex;
+			
+			return nextRowToBeVisitedAndChanged;
+		}
+		
+		return null;
+	}
+	
 	public static JavaPairRDD<Integer, Tuple2<Integer, Double>> computeMinimumSpanningTreeJavaPairRDD(SparkSession sparkSession, SQLContext sqlContext,
 												  JavaRDD<Integer> allAiportIndexesRDD,
 												  CoordinateMatrix coordinateAdjacencyMatrix,
@@ -648,13 +704,16 @@ public class FlightAnalyser {
 		}).cache();
 		
 		MatrixEntry initialVertexMatrixEntry = initialVertexMatrixEntryJavaRDD.first();
-		long initialVertex = initialVertexMatrixEntry.i();
+		int initialVertex = (int) initialVertexMatrixEntry.i();
 		
 		System.out.println(initialVertex);
 		
 		// The array to keep all the distances from the root of
 		// the Minimum Spanning Tree (M.S.T.), initialised as INFINITE
-		JavaPairRDD<Integer, Tuple2<Integer, Double>> distancesJavaPairRDD = allAiportIndexesRDD.mapToPair( (index) -> new Tuple2<Integer, Tuple2<Integer, Double>>(index, new Tuple2<Integer, Double>(-1, Double.MAX_VALUE))).cache();
+		JavaPairRDD<Integer, Tuple2<Integer, Double>> distancesJavaPairRDD = 
+			allAiportIndexesRDD.mapToPair(
+				(index) -> new Tuple2<Integer, Tuple2<Integer, Double>>(index, new Tuple2<Integer, Double>(-1, Double.MAX_VALUE))
+			).cache();
 	 
 		// The array to represent and keep the set of
 		// vertices already yet included in Minimum Spanning Tree (M.S.T.),
@@ -675,7 +734,7 @@ public class FlightAnalyser {
 			 */
 			@Override
 			public Tuple2<Integer, Tuple2<Integer, Double>> call(Tuple2<Integer, Tuple2<Integer, Double>> distancePair) throws Exception {
-				if(distancePair._1() == (int) initialVertex) {
+				if(distancePair._1() == initialVertex) {
 					return new Tuple2<Integer, Tuple2<Integer, Double>>(distancePair._1(), new Tuple2<Integer, Double>(distancePair._1(), 0.0));
 				}
 				else {
@@ -698,7 +757,7 @@ public class FlightAnalyser {
 			 */
 			@Override
 			public Tuple2<Integer, Boolean> call(Tuple2<Integer, Boolean> distancePair) throws Exception {
-				if(distancePair._1() == (int) initialVertex) {
+				if(distancePair._1() == initialVertex) {
 					return new Tuple2<Integer, Boolean>(distancePair._1(), true);
 				}
 				else {
@@ -729,7 +788,7 @@ public class FlightAnalyser {
 		 * - The content of the vector of minimum distances from the origin
 		 */
 		for(Tuple2<Integer, Tuple2<Integer, Double>> distanceTuple : distancesJavaPairRDD.collect()) {
-			System.out.println(distanceTuple._1() + " -> " + distanceTuple._2()._1() + " = " + distanceTuple._2()._2());
+			System.out.println("(" + distanceTuple._2() + " -> " + distanceTuple._1() + ") = " + distanceTuple._2()._2());
 		}
 		
 		/**
@@ -753,7 +812,7 @@ public class FlightAnalyser {
 		
 		Dataset<Row> directPathsFromInitialVertexDataset = sparkSession.createDataFrame(directPathsFromInitialVertexRowJavaRDD, directPathsFromInitialVertexDatasetSchema).cache();
 		
-		JavaRDD<Row> distancesJavaRDD = distancesJavaPairRDD.map(distanceJavaPair -> RowFactory.create(new Object[] {distanceJavaPair._1(), distanceJavaPair._2()})).cache();
+		JavaRDD<Row> distancesJavaRDD = distancesJavaPairRDD.map(distanceJavaPair -> RowFactory.create(new Object[] {distanceJavaPair._1(), distanceJavaPair._2()._1(), distanceJavaPair._2()._2()})).cache();
 		
 		StructType distancesDatasetSchema = DataTypes.createStructType(new StructField[] {
 	            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
@@ -766,18 +825,11 @@ public class FlightAnalyser {
 		JavaRDD<Row> visitedJavaRDD = visitedJavaPairRDD.map(visitedJavaPair -> RowFactory.create(new Object[] {visitedJavaPair._1(), visitedJavaPair._2()})).cache();
 		
 		StructType visitedDatasetSchema = DataTypes.createStructType(new StructField[] {
-	            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
+	            DataTypes.createStructField("visited_index",  DataTypes.IntegerType, true),
 	            DataTypes.createStructField("visited", DataTypes.BooleanType, true)
 	    });
 		
 		Dataset<Row> visitedDataset = sparkSession.createDataFrame(visitedJavaRDD, visitedDatasetSchema).cache();
-		
-		System.out.println();
-		System.out.println();
-		
-		System.out.println(distancesDataset.isEmpty());
-		System.out.println(visitedDataset.isEmpty());
-		
 		
 		for(Row row : distancesDataset.collectAsList())
 			System.out.println(row);
@@ -812,11 +864,14 @@ public class FlightAnalyser {
 			 */
 			@Override
 			public Row call(Row distancesDatasetRow) throws Exception {
-				if(distancesDatasetRow.get(3) == null) {
-					return RowFactory.create(distancesDatasetRow.get(0), distancesDatasetRow.get(1), -1);
+				if(distancesDatasetRow.getInt(1) != -1) {
+					return RowFactory.create(distancesDatasetRow.getInt(0), distancesDatasetRow.getInt(1), distancesDatasetRow.getDouble(2));
+				}
+				else if(distancesDatasetRow.get(3) == null) {
+					return RowFactory.create(distancesDatasetRow.getInt(0), -1, distancesDatasetRow.getDouble(2));
 				}
 				else {
-					return RowFactory.create(distancesDatasetRow.get(0), distancesDatasetRow.get(3), distancesDatasetRow.get(4));
+					return RowFactory.create(distancesDatasetRow.getInt(0), initialVertex, distancesDatasetRow.getDouble(4));
 				}
 			}
 		},
@@ -828,98 +883,72 @@ public class FlightAnalyser {
 		for(Row row : distancesDataset.collectAsList())
 			System.out.println(row);
 		
-		Dataset<Row> distancesVisitedDataset = distancesDataset.join(visitedDataset.select("index", "distance"),
+		Dataset<Row> distancesVisitedDataset = distancesDataset.join(visitedDataset.select("visited_index", "visited"),
 																distancesDataset.col("index")
-															   .equalTo(visitedDataset.col("index")), "left").select("index", "index_from", "distance", "visited")
+															   .equalTo(visitedDataset.col("visited_index")), "left").select("index", "from_index", "distance", "visited")
 															   .sort(functions.asc("index"))
 															   .cache();
 		
 		lastVertex = initialVertex;
 		nextLastVertex = -1;
 		
-		int numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true))
-															  .groupBy("visited").count().rdd().first().getLong(1);
+		int numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true)).count();
 		
 		System.out.println(numVisitedAirports);
 		
 		while(numVisitedAirports < numAllAirports) {
 			
-			Row minDistanceVisitedDataset = distancesVisitedDataset.reduce(new ReduceFunction<Row>() {
-
-				/**
-				 * The default serial version UID
-				 */
-				private static final long serialVersionUID = 1L;
-
-				/**
-				 * 
-				 */
-				@Override
-				public Row call(Row row1, Row row2) throws Exception {
-					
-					double distance1 = row1.getDouble(1);
-					double distance2 = row2.getDouble(1);
-					
-					boolean visited1 = row1.getBoolean(2);
-					boolean visited2 = row2.getBoolean(2);
-					
-					if(!visited1 && !visited2 ) {
-						if(distance1 < distance2) {
-							
-							return row1;
-						}
-						else {		
-							return row2;
-						}
-					}
-					else if(visited1) {
-						return row2;
-					}
-					else {
-						return row1;
-					}
-				}
-			});
+			minRowInDistancesVisitedDataset = getMinRowInDistancesVisitedDataset(distancesVisitedDataset);
 			
-			Dataset<Row> minInDistancesVisitedDataset = distancesVisitedDataset.select("index")
-																			   .where(distancesVisitedDataset.col("index").$eq$eq$eq((int) minDistanceVisitedDataset.getInt(0)));
-				
+			if(minRowInDistancesVisitedDataset != null) {
+				System.out.println("The vertex index with minimum distance is: " + minRowInDistancesVisitedDataset.getInt(0));
+			}
+			
+			StructType distancesVisitedDatasetSchema = DataTypes.createStructType(new StructField[] {
+		            DataTypes.createStructField("index",  DataTypes.IntegerType, true),
+		            DataTypes.createStructField("from_index",  DataTypes.IntegerType, true),
+		            DataTypes.createStructField("distance", DataTypes.DoubleType, true),
+		            DataTypes.createStructField("visited", DataTypes.BooleanType, true)
+		    });
+			
+			
 			distancesVisitedDataset = distancesVisitedDataset.map(new MapFunction<Row, Row>() {
 
 				/**
 				 * The default serial version UID
 				 */
 				private static final long serialVersionUID = 1L;
-
+			
 				/**
 				 * 
 				 */
 				@Override
 				public Row call(Row distancesVisitedDatasetRow) throws Exception {
 					
-					if(!minInDistancesVisitedDataset.isEmpty()) {
-						Row minInDistancesVisitedDatasetRow = minInDistancesVisitedDataset.first();
-						
-						nextLastVertex = minInDistancesVisitedDatasetRow.getInt(0);
-						
-						Row nextRowToBeVisitedAndChanged = RowFactory.create(nextLastVertex, minInDistancesVisitedDatasetRow.getDouble(1), true, lastVertex);
-						
-						lastVertex = nextLastVertex;
-						
-						return nextRowToBeVisitedAndChanged;
-					}
+					//if(minRowInDistancesVisitedDataset != null) {
+						if(minRowInDistancesVisitedDataset.getInt(0) != distancesVisitedDatasetRow.getInt(0)) {
+							return minRowInDistancesVisitedDataset;
+						}
+						//else {
+							//return RowFactory.create(distancesVisitedDatasetRow.getInt(0), distancesVisitedDatasetRow.getInt(1),
+								//	 				 distancesVisitedDatasetRow.getDouble(2), distancesVisitedDatasetRow.getBoolean(3));
+						//}
+					//}
 					else {
-						return RowFactory.create(distancesVisitedDatasetRow.getInt(0), distancesVisitedDatasetRow.getDouble(1),
-												 distancesVisitedDatasetRow.getBoolean(2), distancesVisitedDatasetRow.getInt(3));
+						return RowFactory.create(distancesVisitedDatasetRow.getInt(0), distancesVisitedDatasetRow.getInt(1),
+												 distancesVisitedDatasetRow.getDouble(2), distancesVisitedDatasetRow.getBoolean(3));
 					}
 				}
 			},
-			RowEncoder.apply(visitedDatasetSchema)).cache();
+			RowEncoder.apply(distancesVisitedDatasetSchema)).cache();
 			
+			numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true)).cache().count();
 			
-			numVisitedAirports = (int) distancesVisitedDataset.select("visited")
-															  .where(distancesVisitedDataset.col("visited").$eq$eq$eq(true))
-															  .groupBy("visited").count().rdd().first().getLong(1);
+			for(Row row : distancesVisitedDataset.collectAsList())
+				System.out.println(row);
+			
+			System.out.println();
+			System.out.println();
 		}
 		
 		JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTree = distancesVisitedDataset.javaRDD().mapToPair(
@@ -935,7 +964,7 @@ public class FlightAnalyser {
 				 */
 				@Override
 				public Tuple2<Integer, Tuple2<Integer, Double>> call(Row row) throws Exception {
-					return new Tuple2<Integer, Tuple2<Integer, Double>>(row.getInt(3), new Tuple2<Integer, Double>(row.getInt(0), row.getDouble(1)));
+					return new Tuple2<Integer, Tuple2<Integer, Double>>(row.getInt(1), new Tuple2<Integer, Double>(row.getInt(0), row.getDouble(2)));
 				}
 			}
 		);
@@ -1335,7 +1364,9 @@ public class FlightAnalyser {
 		
 		JavaRDD<Integer> allAirportsIndexesJavaRDD = allAirportsByIndexMap.select("index").javaRDD().map(x -> x.getInt(0));
 		
-		JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTreeJavaPairRDD = computeMinimumSpanningTreeJavaPairRDD(sparkSession, sqlContext, allAirportsIndexesJavaRDD, coordinateAdjacencyMatrix, numAllAirports);
+		JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTreeJavaPairRDD = 
+				computeMinimumSpanningTreeJavaPairRDD(sparkSession, sqlContext, allAirportsIndexesJavaRDD, coordinateAdjacencyMatrix, numAllAirports);
+		
 		for(Tuple2<Integer, Tuple2<Integer, Double>> minimumSpanningTreePair : minimumSpanningTreeJavaPairRDD.collect())
 			System.out.println("(" + minimumSpanningTreePair._1() + "," + minimumSpanningTreePair._2()._1() + ") = " + minimumSpanningTreePair._2()._2());
 		
