@@ -58,9 +58,7 @@ import java.util.Random;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.distributed.CoordinateMatrix;
-import org.apache.spark.mllib.linalg.distributed.IndexedRow;
 import org.apache.spark.mllib.linalg.distributed.MatrixEntry;
 import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Dataset;
@@ -76,7 +74,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
-import scala.Function1;
 import scala.Tuple2;
 
 public class FlightAnalyser {
@@ -94,6 +91,12 @@ public class FlightAnalyser {
             DataTypes.createStructField("from_index",  DataTypes.IntegerType, true),
             DataTypes.createStructField("distance", DataTypes.DoubleType, true),
             DataTypes.createStructField("visited", DataTypes.BooleanType, true)
+    });
+	
+	private static StructType minimumSpanningTreeDatasetSchema = DataTypes.createStructType(new StructField[] {
+            DataTypes.createStructField("origin",  DataTypes.IntegerType, true),
+            DataTypes.createStructField("destination",  DataTypes.IntegerType, true),
+            DataTypes.createStructField("distance", DataTypes.DoubleType, true)
     });
 	
 	// IMPLEMENTATION STEPS
@@ -120,7 +123,7 @@ public class FlightAnalyser {
 	
 	// 4. Modify the Graph to reduce by a given factor the Average Departure Delay time of
 	// all routes going out of the selected airport.
-	// This factor will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[.
+	// This factor will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[. (DONE - TODO verify)
 	
 	// 5. Recompute the M.S.T. and display the changes perceived in the resulting subgraph and
 	// on the sum of the total edge weight
@@ -1307,12 +1310,40 @@ public class FlightAnalyser {
 	}
 
 	// TODO
-	public static JavaPairRDD<Integer, Tuple2<Integer, Double>> getMinimumSpanningTreeReducedByFactor(float reduceFactor) {
-		return null;
-	}
-	
-	
-	
+	public static JavaPairRDD<Integer, Tuple2<Integer, Double>> getMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorJavaRDD
+				(SparkSession sparkSession, JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTreeComplementJavaRDD,
+				 Tuple2<Integer, Double> bottleneckAirport, float reduceFactor) { 
+		
+		JavaRDD<Row> minimumSpanningTreeComplementRowsJavaRDD = minimumSpanningTreeComplementJavaRDD
+																.map(tuple -> RowFactory.create(tuple._1(), tuple._2()._1(), tuple._2()._2()));
+		
+		Dataset<Row> minimumSpanningTreeComplementRowsDataset = sparkSession.createDataFrame(minimumSpanningTreeComplementRowsJavaRDD, minimumSpanningTreeDatasetSchema)
+																			.sort(functions.asc("origin")).cache();
+		
+		Dataset<Row> bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset = minimumSpanningTreeComplementRowsDataset
+				                                                                     .where(minimumSpanningTreeComplementRowsDataset.col("origin").$eq$eq$eq(bottleneckAirport._1()));
+			
+		bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset = bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset
+																		.withColumn("distance_reduced_factor", bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("distance").$times(reduceFactor));
+		
+		bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset = 
+				bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.select(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("origin"),
+																					 bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("destination"),
+																					 bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("distance_reduced_factor").as("distance"));
+		
+		minimumSpanningTreeComplementRowsDataset = minimumSpanningTreeComplementRowsDataset
+												  .join(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset, minimumSpanningTreeComplementRowsDataset.col("origin")
+												  .equalTo(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("index")), "leftanti").sort(functions.asc("index")).cache();
+		
+		Dataset<Row> modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorDataset = minimumSpanningTreeComplementRowsDataset.union(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset);
+		
+		JavaPairRDD<Integer, Tuple2<Integer, Double>> modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorJavaPairRDD = 
+													  modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorDataset.javaRDD()
+													  .mapToPair(row -> new Tuple2<Integer, Tuple2<Integer, Double>>(row.getInt(0), new Tuple2<Integer, Double>(row.getInt(1), row.getDouble(2))))
+													  .cache();
+		
+		return modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorJavaPairRDD;
+	}	
 	
 	/**
 	 * Main method to process the flights' file and analyse it.
@@ -1357,6 +1388,10 @@ public class FlightAnalyser {
 		SparkSession sparkSession = SparkSession
 									.builder()
 									.appName("FlightAnalyser")
+									.config("spark.executor.memory", "70g")
+							        .config("spark.driver.memory", "50g")
+							        .config("spark.memory.offHeap.enabled",true)
+							        .config("spark.memory.offHeap.size","16g")
 									.master("local[*]")
 									.getOrCreate();
 		
