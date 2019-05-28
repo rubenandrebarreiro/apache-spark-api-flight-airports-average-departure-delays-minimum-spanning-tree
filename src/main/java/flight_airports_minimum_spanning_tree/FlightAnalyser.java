@@ -77,12 +77,15 @@ public class FlightAnalyser {
 
 	private static final String DefaulftFile = "data/flights_6.csv";
 	
+	
+	// The Datasets' Schemas defined as Struct Types for the Coordinate Adjacency Matrix
 	private static StructType coordinateAdjacencyMatrixEntriesDatasetSchema = DataTypes.createStructType(new StructField[] {
             DataTypes.createStructField("row_index",  DataTypes.IntegerType, true),
             DataTypes.createStructField("column_index",  DataTypes.IntegerType, true),
             DataTypes.createStructField("distance", DataTypes.DoubleType, true)
     });
 	
+	// The Datasets' Schemas defined as Struct Types for the Distances and Visited flag for the Vertices
 	private static StructType distancesVisitedDatasetSchema = DataTypes.createStructType(new StructField[] {
             DataTypes.createStructField("index",  DataTypes.IntegerType, true),
             DataTypes.createStructField("from_index",  DataTypes.IntegerType, true),
@@ -90,6 +93,7 @@ public class FlightAnalyser {
             DataTypes.createStructField("visited", DataTypes.BooleanType, true)
     });
 	
+	// The Datasets' Schemas defined as Struct Types for the Minimum Spanning Tree (M.S.T.)
 	private static StructType minimumSpanningTreeDatasetSchema = DataTypes.createStructType(new StructField[] {
             DataTypes.createStructField("origin",  DataTypes.IntegerType, true),
             DataTypes.createStructField("destination",  DataTypes.IntegerType, true),
@@ -188,7 +192,8 @@ public class FlightAnalyser {
 			
 			Dataset<Row> allDelaysOfTheFlightsBetweenTwoAirportsDataset = flightsDataset.select("origin_id", "destination_id", "departure_delay");
 			
-			Dataset<Row> allDelaysOfTheFlightsBetweenTwoAirportsInvertedDataset = allDelaysOfTheFlightsBetweenTwoAirportsDataset.select("destination_id", "origin_id", "departure_delay");
+			Dataset<Row> allDelaysOfTheFlightsBetweenTwoAirportsInvertedDataset = allDelaysOfTheFlightsBetweenTwoAirportsDataset
+																				  .select("destination_id", "origin_id", "departure_delay");
 			
 			
 			Dataset<Row> allDelaysOfTheFlightsBetweenTwoAirportsWithDuplicatesDataset = allDelaysOfTheFlightsBetweenTwoAirportsDataset
@@ -215,26 +220,34 @@ public class FlightAnalyser {
 					.avg("departure_delay")
 					.orderBy("origin_id");
 			
-			Dataset<Row> allPossibleOriginAirportsByIndexMap = allAirportsByIndexMap.withColumnRenamed("id", "origin_id").withColumnRenamed("index", "origin_index");
+			Dataset<Row> allPossibleOriginAirportsByIndexMap = allAirportsByIndexMap
+															   .withColumnRenamed("id", "origin_id").withColumnRenamed("index", "origin_index");
 			
-			Dataset<Row> allPossibleDestinationAirportsByIndexMap = allAirportsByIndexMap.withColumnRenamed("id", "destination_id").withColumnRenamed("index", "destination_index");
+			Dataset<Row> allPossibleDestinationAirportsByIndexMap = allAirportsByIndexMap
+																	.withColumnRenamed("id", "destination_id").withColumnRenamed("index", "destination_index");
 			
+			// Defines the Dataset of All Average Departure Delays of the Flights, joined with the Possible Origin Airports IDs
 			allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
 					allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
 					.join(allPossibleOriginAirportsByIndexMap,
 						  allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.col("origin_id")
 						  .equalTo(allPossibleOriginAirportsByIndexMap.col("origin_id")), "left");
 			
+			// Defines the Dataset of All Average Departure Delays of the Flights, joined with the Possible Destination Airports IDs
 			allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
 					allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
 					.join(allPossibleDestinationAirportsByIndexMap,
 						  allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.col("destination_id")
 						  .equalTo(allPossibleDestinationAirportsByIndexMap.col("destination_id")), "left");
 			
+			// Defines the Dataset of All Average Departure Delays of The Flights
+			// Between Any Two Airports Origin and Destination Dataset
 			allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
 					allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
 							.select("origin_index", "t1.origin_id", "destination_index", "t1.destination_id", "avg(departure_delay)");
 			
+			// Defines the Dataset of All Average Delays of The Flights
+			// Between Any Two Airports, Disregarding Origin and Destination Dataset, unified with inverted indexes
 			allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
 					allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
 					.union(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
@@ -277,41 +290,12 @@ public class FlightAnalyser {
 	}
 	
 	/**
-	 * Returns the Map of All Origin Airports by Index
-	 * (to be used as row's index in Coordinate Adjacency Matrix).
+	 * Returns all Airports mapped by Index, ordered by ID. 
 	 * 
-	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
+	 * @param allAirportsIDsDataset the Dataset of all Airports' IDs
 	 * 
-	 * @return the Map of All Origin Airports by Index
-	 *         (to be used as row's index in Coordinate Adjacency Matrix)
+	 * @return all Airports mapped by Index, ordered by ID
 	 */
-	public static Dataset<Row> mapAllOriginAirportsByIndex(Dataset<Row> flightsDataset) {
-		Dataset<Row> allOriginAirportsDataset = 
-				 flightsDataset.select("origin_id")
-				 			   .orderBy("origin_id")
-				 			   .distinct();
-		
-		return allOriginAirportsDataset.withColumn("origin_num", functions.row_number().over(Window.orderBy("origin_id")));
-	}
-	
-	/**
-	 * Returns the Map of All Destination Airports by Index
-	 * (to be used as column's index in Coordinate Adjacency Matrix).
-	 * 
-	 * @param flightsDataset the Dataset (built of Rows) of the flights read from the .CSV file
-	 * 
-	 * @return the Map of All Destination Airports by Index
-	 *         (to be used as column's index in Coordinate Adjacency Matrix)
-	 */
-	public static Dataset<Row> mapAllDestinationAirportsByIndex(Dataset<Row> flightsDataset) {
-		Dataset<Row> allOriginAirportsDataset = 
-				 flightsDataset.select("destination_id")
-				 			   .orderBy("destination_id")
-				 			   .distinct();
-		
-		return allOriginAirportsDataset.withColumn("destination_num", functions.row_number().over(Window.orderBy("destination_id")));
-	}
-	
 	public static Dataset<Row> mapAllAirportsByIndex(Dataset<Row> allAirportsIDsDataset) {
 		allAirportsIDsDataset = 
 				allAirportsIDsDataset.select("id")
@@ -337,8 +321,8 @@ public class FlightAnalyser {
 		originAirportsByIndexMap.registerTempTable("origin_airports_by_index_map");
 		
 		String sqlQueryFindOriginAirportByIndex = "SELECT t1.origin_num " +
-				  "FROM origin_airports_by_index_map t1 " +
-			      "WHERE t1.origin_id = " + originID;
+												  "FROM origin_airports_by_index_map t1 " +
+											      "WHERE t1.origin_id = " + originID;
 		
 		Dataset<Row> originAirportIndex = sqlContext.sql(sqlQueryFindOriginAirportByIndex);
 
@@ -361,8 +345,8 @@ public class FlightAnalyser {
 		destinationAirportsByIndexMap.registerTempTable("destination_airports_by_index_map");
 		
 		String sqlQueryFindDestinationAirportByIndex = "SELECT t1.destination_num " +
-				  "FROM destination_airports_by_index_map t1 " +
-			      "WHERE t1.destination_id = " + destinationID;
+													   "FROM destination_airports_by_index_map t1 " +
+												       "WHERE t1.destination_id = " + destinationID;
 		
 		Dataset<Row> destinationAirportIndex = sqlContext.sql(sqlQueryFindDestinationAirportByIndex);
 
@@ -395,7 +379,7 @@ public class FlightAnalyser {
 	
 	/**
 	 * Returns a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
-	 * of mappings between Airport Origin's ID and the a tuple containing other two tuples:
+	 * of mappings between Airport Origin's ID and the a tuple/pair containing other two tuples/pairs:
 	 * - (row's index, column's index) of the Adjacency Coordinate Matrix
 	 * - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
 	 * 
@@ -404,7 +388,7 @@ public class FlightAnalyser {
 	 *        ordered by descending of Average field, disregarding Origin and Destination
 	 * 
 	 * @return a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
-	 * 		   of mappings between Airport Origin's ID and the a tuple containing other two tuples:
+	 * 		   of mappings between Airport Origin's ID and the a tuple/pair containing other two tuples/pairs:
 	 *         - (row's index, column's index) of the Adjacency Coordinate Matrix
 	 *         - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports)
 	 */
@@ -445,7 +429,7 @@ public class FlightAnalyser {
 	
 	/**
 	 * Returns a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
-	 * of mappings between Airport Origin's ID and the a tuple containing:
+	 * of mappings between Airport Origin's ID and the a tuple/pair containing:
 	 * - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
 	 * 
 	 * @param allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
@@ -453,7 +437,7 @@ public class FlightAnalyser {
 	 *        ordered by descending of Average field, disregarding Origin and Destination
 	 * 
 	 * @return a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
-	 * 		   of mappings between Airport Origin's ID and the a tuple containing:
+	 * 		   of mappings between Airport Origin's ID and the a tuple/pair containing:
 	 * 		   - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
 	 */
 	public static JavaPairRDD<Long, Tuple2<Long, Double>> 
@@ -491,7 +475,7 @@ public class FlightAnalyser {
 	
 	/**
 	 * Returns a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
-	 * of mappings between Airport Origin's ID and an iterable tuple containing:
+	 * of mappings between Airport Origin's ID and an iterable tuple/pair containing:
 	 * - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
 	 * 
 	 * @param allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
@@ -499,7 +483,7 @@ public class FlightAnalyser {
 	 *        ordered by descending of Average field, disregarding Origin and Destination
 	 * 
 	 * @return a Java Pair RDD containing a collection (Disregarding Airport's Origin and Destination)
-	 * 		   of mappings between Airport Origin's ID and an iterable tuple containing:
+	 * 		   of mappings between Airport Origin's ID and an iterable tuple/pair containing:
 	 * 		   - (Airport Destination's ID, Average Departure Delays of the Flights between that two Airports) 
 	 */
 	public static JavaPairRDD<Long, Iterable<Tuple2<Long, Double>>> 
@@ -576,16 +560,29 @@ public class FlightAnalyser {
 				}
 		);
 		
-		RDD<MatrixEntry> matrixEntriesRDD = matrixEntriesJavaRDD.rdd()/*.cache()*/;
+		RDD<MatrixEntry> matrixEntriesRDD = matrixEntriesJavaRDD.rdd();
 		
 		return new CoordinateMatrix(matrixEntriesRDD, matrixDimensions, matrixDimensions);
 	}
 	
+	/**
+	 * Returns the computed Minimum Spanning Tree as a JavaPairRDD format,
+	 * with a tuple/pair containing the origin vertex and other tuple/pair containing the destination vertex and the distance (Average Departure Delay)
+	 * 
+	 * @param sparkSession a given SparkSession
+	 * @param sqlContext a given SQL Context
+	 * @param allAiportIndexesRDD a given RDD with All Airports mapped by Index 
+	 * @param coordinateAdjacencyMatrix the Coordinate Adjacency Matrix
+	 * @param numAllAirports the number of all Airports
+	 * 
+	 * @return the computed Minimum Spanning Tree as a JavaPairRDD format,
+	 * 		   with a tuple/pair containing the origin vertex and other tuple/pair containing the destination vertex and the distance (Average Departure Delay)
+	 */
 	@SuppressWarnings("deprecation")
 	public static JavaPairRDD<Integer, Tuple2<Integer, Double>> computeMinimumSpanningTreeJavaPairRDD(SparkSession sparkSession, SQLContext sqlContext,
-												  JavaRDD<Integer> allAiportIndexesRDD,
-												  CoordinateMatrix coordinateAdjacencyMatrix,
-												  long numAllAirports) {  
+																									  JavaRDD<Integer> allAiportIndexesRDD,
+																									  CoordinateMatrix coordinateAdjacencyMatrix,
+																									  long numAllAirports) {  
 	    
 		JavaRDD<MatrixEntry> coordinateAdjacencyMatrixEntriesJavaRDD = coordinateAdjacencyMatrix.entries().toJavaRDD();
 		
@@ -593,7 +590,7 @@ public class FlightAnalyser {
 															.map(matrixEntry -> RowFactory.create((int) matrixEntry.i(), (int) matrixEntry.j(), matrixEntry.value()));
 		
 		Dataset<Row> coordinateAdjacencyMatrixRowsDataset = sparkSession.createDataFrame(coordinateAdjacencyMatrixRowsJavaRDD, coordinateAdjacencyMatrixEntriesDatasetSchema)
-																        .sort(functions.asc("row_index"))/*.cache()*/;
+																        .sort(functions.asc("row_index"));
 		
 		Random random = new Random();
 		
@@ -691,6 +688,10 @@ public class FlightAnalyser {
 
 				/**
 				 * TODO - ver visitados e null 
+				 */
+				
+				/**
+				 * The call method to perform the reduce for each row
 				 */
 				@Override
 				public Row call(Row row1, Row row2) throws Exception {
@@ -794,7 +795,7 @@ public class FlightAnalyser {
 					private static final long serialVersionUID = 1L;
 
 					/**
-					 * 
+					 * The call method to perform the map for each row
 					 */
 					@Override
 					public Row call(Row distancesVisitedDatasetRow) throws Exception {
@@ -838,8 +839,7 @@ public class FlightAnalyser {
 				
 				lastVertexIndex = nextLastVertexIndex;
 				
-				
-				numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true))/*.cache()*/.count();	
+				numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true)).count();	
 			}
 		}
 		
@@ -852,7 +852,7 @@ public class FlightAnalyser {
 				private static final long serialVersionUID = 1L;
 
 				/**
-				 * 
+				 * The call method to perform the map to pair for each row
 				 */
 				@Override
 				public Tuple2<Integer, Tuple2<Integer, Double>> call(Row row) throws Exception {
@@ -920,6 +920,11 @@ public class FlightAnalyser {
 		return minimumSpanningTreeComplementCoordinateAdjacencyMatrixJavaPairRDD;
 	}
 	
+	/**
+	 * 
+	 * @param minimumSpanningTreeComplementJavaRDD
+	 * @return
+	 */
 	public static Tuple2<Integer, Double> getBottleneckAirportFromMinimumSpanningTreeComplementJavaRDD(JavaRDD<MatrixEntry> minimumSpanningTreeComplementJavaRDD) {
 
 		JavaPairRDD<Integer, Double> minimumSpanningTreeComplementJavaPairRDD = 
@@ -957,7 +962,14 @@ public class FlightAnalyser {
 		return bottleneckAirportFromMinimumSpanningTreeComplementTuple;
 	}
 	
-	
+	/**
+	 * 
+	 * @param sparkSession
+	 * @param initialCoordinateAdjacencyMatrix
+	 * @param bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD
+	 * @param reduceFactor
+	 * @return
+	 */
 	public static CoordinateMatrix buildCoordinateAdjacencyMatrixWithBottleneckAirportReducedByFactor
 			(SparkSession sparkSession, CoordinateMatrix initialCoordinateAdjacencyMatrix, Tuple2<Integer, Double> bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD, float reduceFactor) {
 		
@@ -985,7 +997,7 @@ public class FlightAnalyser {
 							   .or(initialCoordinateAdjacencyMatrixRowsDataset.col("row_index").equalTo(bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset.col("row_index"))
 									    .and(initialCoordinateAdjacencyMatrixRowsDataset.col("column_index").equalTo(bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset.col("column_index")))), 
 								  
-						  "leftanti").sort(functions.asc("row_index"))/*.cache()*/;
+						  "leftanti").sort(functions.asc("row_index"));
 		
 		Dataset<Row> coordinateAdjacencyMatrixRowsDatasetWithBottleneckRoutesReducedByFactor = coordinateAdjacencyMatrixRowsDatasetWithoutBottleneckAirport
 																							   .union(bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset)
@@ -999,7 +1011,14 @@ public class FlightAnalyser {
 	}
 
 	
-	// TODO
+	/**
+	 * 
+	 * @param sparkSession
+	 * @param minimumSpanningTreeComplementJavaRDD
+	 * @param bottleneckAirport
+	 * @param reduceFactor
+	 * @return
+	 */
 	public static JavaPairRDD<Integer, Tuple2<Integer, Double>> getMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorJavaRDD
 				(SparkSession sparkSession, JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTreeComplementJavaRDD,
 				 Tuple2<Integer, Double> bottleneckAirport, float reduceFactor) { 
@@ -1008,7 +1027,7 @@ public class FlightAnalyser {
 																.map(tuple -> RowFactory.create(tuple._1(), tuple._2()._1(), tuple._2()._2()));
 		
 		Dataset<Row> minimumSpanningTreeComplementRowsDataset = sparkSession.createDataFrame(minimumSpanningTreeComplementRowsJavaRDD, minimumSpanningTreeDatasetSchema)
-																			.sort(functions.asc("origin"))/*.cache()*/;
+																			.sort(functions.asc("origin"));
 		
 		Dataset<Row> bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset = minimumSpanningTreeComplementRowsDataset
 				                                                                     .where(minimumSpanningTreeComplementRowsDataset.col("origin").$eq$eq$eq(bottleneckAirport._1()));
@@ -1023,14 +1042,14 @@ public class FlightAnalyser {
 		
 		minimumSpanningTreeComplementRowsDataset = minimumSpanningTreeComplementRowsDataset
 												  .join(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset, minimumSpanningTreeComplementRowsDataset.col("origin")
-												  .equalTo(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("index")), "leftanti").sort(functions.asc("index"))/*.cache()*/;
+												  .equalTo(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset.col("index")), "leftanti").sort(functions.asc("index"));
 		
-		Dataset<Row> modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorDataset = minimumSpanningTreeComplementRowsDataset.union(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset);
+		Dataset<Row> modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorDataset = minimumSpanningTreeComplementRowsDataset
+																										.union(bottleneckAirportFromMinimumSpanningTreeComplementRowsDataset);
 		
 		JavaPairRDD<Integer, Tuple2<Integer, Double>> modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorJavaPairRDD = 
 													  modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorDataset.javaRDD()
-													  .mapToPair(row -> new Tuple2<Integer, Tuple2<Integer, Double>>(row.getInt(0), new Tuple2<Integer, Double>(row.getInt(1), row.getDouble(2))))
-													  /*.cache()*/;
+													  .mapToPair(row -> new Tuple2<Integer, Tuple2<Integer, Double>>(row.getInt(0), new Tuple2<Integer, Double>(row.getInt(1), row.getDouble(2))));
 		
 		return modifiedMinimumSpanningTreeComplementWithBottleneckAirportReducedByFactorJavaPairRDD;
 	}	
