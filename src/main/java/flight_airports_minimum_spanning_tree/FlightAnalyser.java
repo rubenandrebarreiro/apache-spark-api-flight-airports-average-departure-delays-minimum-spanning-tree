@@ -112,18 +112,18 @@ public class FlightAnalyser {
 	// 2. Compute the Graph's Minimum Spanning Tree (M.S.T.) by
 	// implementing the parallel version of Prim's Algorithm (available from CLIP platform).
 	// The M.S.T. will be the subgraph of the original with the minimum total edge weight
-	// (sum of the Average Departure Delays). Output the M.S.T. and its total edge weight. (PARTIALLY DONE - TODO verify)
+	// (sum of the Average Departure Delays). Output the M.S.T. and its total edge weight. (STEP DONE)
 	
 	// 3. Identify the 'Bottleneck' Airport, i.e., the Airport with higher aggregated Average Departure Delay time
 	// (sum of the Average Departure Delays of all routes going out of the Airport)
-	// from the ones contained in the complement Graph of the M.S.T. previously computed. (DONE - TODO verify)
+	// from the ones contained in the complement Graph of the M.S.T. previously computed. (STEP DONE)
 	
 	// 4. Modify the Graph to reduce by a given factor the Average Departure Delay time of
 	// all routes going out of the selected airport.
-	// This factor will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[. (DONE - TODO verify)
+	// This factor will be a parameter of your algorithm (received in the command line) and must be a value in ]0, 1[. (STEP DONE)
 	
 	// 5. Recompute the M.S.T. and display the changes perceived in the resulting subgraph and
-	// on the sum of the total edge weight
+	// on the sum of the total edge weight (STEP DONE)
 	
 	// NOTE:
 	// - Fields of the Structure of .CSV file, include:
@@ -147,7 +147,6 @@ public class FlightAnalyser {
 	
 	
 	// Methods:
-	
 
 	/**
 	 * Returns all Average Departure Delays of Flights for each route, ordered by descending of Average field.
@@ -786,19 +785,6 @@ public class FlightAnalyser {
 				
 				distancesVisitedDataset = distancesVisitedDataset.join(possibleToBeAddedToDistancesVisitedDataset, distancesVisitedDataset.col("index")
 						 .equalTo(possibleToBeAddedToDistancesVisitedDataset.col("index")), "left");
-
-				System.out.println();
-				System.out.println();
-				System.out.println();
-				System.out.println();
-				
-				for(Row a : distancesVisitedDataset.collectAsList())
-					System.out.println(a);
-
-				System.out.println();
-				System.out.println();
-				System.out.println();
-				System.out.println();
 				
 				distancesVisitedDataset = distancesVisitedDataset.map(new MapFunction<Row, Row>() {
 
@@ -958,11 +944,11 @@ public class FlightAnalyser {
 		JavaPairRDD<Integer, Double> sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD = 
 				minimumSpanningTreeComplementJavaPairRDD.reduceByKey((departureDelay1, departureDelay2) -> departureDelay1 + departureDelay2).cache();
 		
-		// TODO tirar
 		System.out.println();
 		
+		System.out.println("The total aggregated sum of the Distances (Average Departure Delays) for each Airport of the Mininum Spanning Tree Complement:");
 		for(Tuple2<Integer, Double> tuple : sumOfDepartureDelaysByAirportFromMinimumSpanningTreeComplementJavaPairRDD.collect()) {
-			System.out.println(tuple._1() + " = " + tuple._2());
+			System.out.println("- " + tuple._1() + " = " + tuple._2());
 		}
 		
 		Tuple2<Integer, Double> bottleneckAirportFromMinimumSpanningTreeComplementTuple = 
@@ -987,14 +973,6 @@ public class FlightAnalyser {
 																			   .filter(initialCoordinateAdjacencyMatrixRowsDataset.col("row_index").$eq$eq$eq(bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD._1())
 																				   .or(initialCoordinateAdjacencyMatrixRowsDataset.col("column_index").$eq$eq$eq(bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD._1())))
 																			   .withColumn("distance_reduced_factor", initialCoordinateAdjacencyMatrixRowsDataset.col("distance").$times(reduceFactor));
-		System.out.println();
-		System.out.println();
-		
-		for(Row a : bottleneckRoutesFromCoordinateAdjacencyMatrixRowsDataset.collectAsList())
-			System.out.println(a);
-		
-		System.out.println();
-		System.out.println();
 		
 		Dataset<Row> bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset = bottleneckRoutesFromCoordinateAdjacencyMatrixRowsDataset
 																				  .select("row_index", "column_index", "distance_reduced_factor")
@@ -1100,10 +1078,6 @@ public class FlightAnalyser {
 		SparkSession sparkSession = SparkSession
 									.builder()
 									.appName("FlightAnalyser")
-									/*.config("spark.executor.memory", "70g")
-							        .config("spark.driver.memory", "50g")
-							        .config("spark.memory.offHeap.enabled",true)
-							        .config("spark.memory.offHeap.size","16g")*/
 									.master("local[*]")
 									.getOrCreate();
 		
@@ -1233,7 +1207,7 @@ public class FlightAnalyser {
 		System.out.println();
 		
 		System.out.println("The Bottleneck Airport with the highest aggregated Average Departure Delay is:");
-		System.out.println("- (" + bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD._1() + "," + bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD._2() +")");
+		System.out.println("- " + bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD._1() + " = " + bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD._2());
 		
 		CoordinateMatrix coordinateAdjacencyMatrixWithBottleneckAirportReducedByFactor = 
 				buildCoordinateAdjacencyMatrixWithBottleneckAirportReducedByFactor(sparkSession, coordinateAdjacencyMatrix, bottleneckAirportFromMinimumSpanningTreeComplementJavaRDD, reduceFactor);
