@@ -840,7 +840,7 @@ public class FlightAnalyser {
 				lastVertexIndex = nextLastVertexIndex;
 				
 				numVisitedAirports = (int) distancesVisitedDataset.select("visited").where(distancesVisitedDataset.col("visited").$eq$eq$eq(true)).count();	
-			}
+			} 
 		}
 		
 		JavaPairRDD<Integer, Tuple2<Integer, Double>> minimumSpanningTree = distancesVisitedDataset.javaRDD().mapToPair(
