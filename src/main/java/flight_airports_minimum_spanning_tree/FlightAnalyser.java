@@ -49,6 +49,7 @@ import org.apache.spark.api.java.function.ReduceFunction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -861,22 +862,26 @@ public class FlightAnalyser {
 
 		// TODO - Just for debug
 		reduceFactor = 0.07588053f;
-		
-		System.out.println();
-		System.out.println("The Reduce Factor to apply to all the Routes going out from the Bottleneck Airport will be: " + reduceFactor);
-		System.out.println();
-		
-		
+				
 		// The Dataset (built of Rows), containing All Airports' IDs
 		Dataset<Row> allAirportsIDsDataset = getAllAirportsIDsDataset(flightsInfo).persist(StorageLevel.MEMORY_AND_DISK());
-				
+
+		// The maximum number between the Origin and Destination IDs (to be used as the dimensions of Coordinate Adjacency Matrix)
+		long numAllAirports = allAirportsIDsDataset.orderBy("id").count();
 		
 		// The Map of all Airports by Index
 		// (to be used as row's or column's index in Coordinate Adjacency Matrix)
 		Dataset<Row> allAirportsByIndexMap = mapAllAirportsByIndex(allAirportsIDsDataset).persist(StorageLevel.MEMORY_AND_DISK());
 		
 		
-		// Printing the information (for debug) 
+		// Printing the information (for debug)
+		System.out.println();
+		System.out.println("The number of Airports that will be processed by the Algorithm: " + reduceFactor);
+		System.out.println();
+		System.out.println();
+		System.out.println("The Reduce Factor to apply to all the Routes going out from the Bottleneck Airport will be: " + reduceFactor);
+		System.out.println();
+		
 		
 		// The Dataset (built of Rows), containing all Average Departure Delays of the Flights Between Any Airports
 		// (Disregarding Origin and Destination Airports) with Indexes, organised by the corresponding fields
@@ -906,12 +911,6 @@ public class FlightAnalyser {
 						getAllAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesJavaPairRDD
 								(allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationWithIndexesDataset)
 								.persist(StorageLevel.MEMORY_AND_DISK());
-		
-		
-		// Printing the information (for debug) 
-		
-		// The maximum number between the Origin and Destination IDs (to be used as the dimensions of Coordinate Adjacency Matrix)
-		long numAllAirports = allAirportsIDsDataset.orderBy("id").count();
 		
 		// The Adjacency Matrix (Coordinate Matrix) to represent the Graph of
 		// Average Departure Delays between all two Airports (Disregarding Airport's Origin and Destination),
@@ -1028,5 +1027,15 @@ public class FlightAnalyser {
 		// Terminate the Spark's Context and Session
 		sparkContext.stop();
 		sparkSession.stop();
+		
+		long endExecutionTime = System.currentTimeMillis();
+		
+		String endExecutionTimeInHoursMinutesAndSeconds = 
+				String.format("%02dh:%02dm:%02ds",
+							  TimeUnit.MILLISECONDS.toHours(endExecutionTime),
+	            			  TimeUnit.MILLISECONDS.toMinutes(endExecutionTime) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(endExecutionTime)),
+	            			  TimeUnit.MILLISECONDS.toSeconds(endExecutionTime) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(endExecutionTime)));
+	    
+		System.out.println("It took " + endExecutionTimeInHoursMinutesAndSeconds + " to process and execute the whole Algorithm with a Dataset with " + numAllAirports + " Airports!");
 	}
 }
