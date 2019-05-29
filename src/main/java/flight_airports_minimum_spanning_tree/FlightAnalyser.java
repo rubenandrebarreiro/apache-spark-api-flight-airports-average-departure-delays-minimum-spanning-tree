@@ -74,10 +74,10 @@ import scala.Tuple2;
 public class FlightAnalyser {
 
 	
-	// Contants/Invariables:
+	// Constants/Invariables:
 	
 	// The file containing the sample of Flights in use
-	private static final String DefaulftFile = "data/flights_6.csv";
+	private static final String DefaulftFile = "data/flights_3.csv";
 	
 	// The Datasets' Schemas defined as Struct Types for the Coordinate Adjacency Matrix
 	private static StructType coordinateAdjacencyMatrixEntriesDatasetSchema = DataTypes.createStructType(new StructField[] {
@@ -212,16 +212,22 @@ public class FlightAnalyser {
 			
 			Dataset<Row> allPossibleDestinationAirportsByIndexMap = allAirportsByIndexMap.withColumnRenamed("id", "destination_id").withColumnRenamed("index", "destination_index");
 			
+			int numPartitionsOfAllPossibleOriginAirportsByIndexMap = allPossibleOriginAirportsByIndexMap.rdd().getNumPartitions();
+
 			// Defines the Dataset of All Average Departure Delays of the Flights, joined with the Possible Origin Airports IDs
 			allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
 					allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
+					.repartition(numPartitionsOfAllPossibleOriginAirportsByIndexMap)
 					.join(allPossibleOriginAirportsByIndexMap,
 						  allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.col("origin_id")
 						  .equalTo(allPossibleOriginAirportsByIndexMap.col("origin_id")), "left");
 			
+			int numPartitionsOfAllPossibleDestinationAirportsByIndexMap = allPossibleDestinationAirportsByIndexMap.rdd().getNumPartitions();
+			
 			// Defines the Dataset of All Average Departure Delays of the Flights, joined with the Possible Destination Airports IDs
 			allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset = 
 					allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset
+					.repartition(numPartitionsOfAllPossibleDestinationAirportsByIndexMap)
 					.join(allPossibleDestinationAirportsByIndexMap,
 						  allAverageDelaysOfTheFlightsBetweenAnyTwoAirportsDisregardingOriginAndDestinationDataset.col("destination_id")
 						  .equalTo(allPossibleDestinationAirportsByIndexMap.col("destination_id")), "left");
@@ -397,8 +403,12 @@ public class FlightAnalyser {
 		
 		List<Row> directPathsFromInitialVertexRowList = new ArrayList<>();
 		
-		distancesVisitedDataset = distancesVisitedDataset.join(directPathsFromInitialVertexDataset, distancesVisitedDataset.col("index")
-				 .equalTo(directPathsFromInitialVertexDataset.col("column_index")), "leftanti").sort(functions.asc("index")).cache();
+		int numOfPartitionsOfDirectPathsFromInitialVertexDataset = directPathsFromInitialVertexDataset.rdd().getNumPartitions();
+		
+		distancesVisitedDataset = distancesVisitedDataset.repartition(numOfPartitionsOfDirectPathsFromInitialVertexDataset)
+														 .join(directPathsFromInitialVertexDataset, distancesVisitedDataset.col("index")
+														 .equalTo(directPathsFromInitialVertexDataset.col("column_index")), "leftanti").sort(functions.asc("index"))
+														 .cache();
 		
 		for(Row directPathsFromInitialVertexRow: directPathsFromInitialVertexDataset.collectAsList()) {	
 			Row directPathsFromInitialVertexRowToBeAddedToDataset = RowFactory.create(directPathsFromInitialVertexRow.getInt(1), initialVertexIndex, 
@@ -484,7 +494,10 @@ public class FlightAnalyser {
 				
 				Dataset<Row> minRowInDistancesVisitedDataset = sparkSession.createDataFrame(nextRowToBeVisitedAndChangedList, distancesVisitedDatasetSchema).cache();
 				
-				distancesVisitedDataset = distancesVisitedDataset.join(minRowInDistancesVisitedDataset, distancesVisitedDataset.col("index")
+				int numPartitionsOfMinRowInDistancesVisitedDataset = minRowInDistancesVisitedDataset.rdd().getNumPartitions();
+				
+				distancesVisitedDataset = distancesVisitedDataset.repartition(numPartitionsOfMinRowInDistancesVisitedDataset)
+																 .join(minRowInDistancesVisitedDataset, distancesVisitedDataset.col("index")
 						 										 .equalTo(minRowInDistancesVisitedDataset.col("index")), "leftanti");
 				
 				distancesVisitedDataset = distancesVisitedDataset.union(minRowInDistancesVisitedDataset).sort(functions.asc("index")).cache();
@@ -520,11 +533,14 @@ public class FlightAnalyser {
 					directPathsFromLastVertexIndexList.add(directPathsFromLastVertexRowToBeAddedToDataset);
 				}
 				
-				Dataset<Row> possibleToBeAddedToDistancesVisitedDataset = 
+				Dataset<Row> possiblePathsToBeAddedToDistancesVisitedDataset = 
 								sparkSession.createDataFrame(directPathsFromLastVertexIndexList, distancesVisitedDatasetSchema).cache();
 				
-				distancesVisitedDataset = distancesVisitedDataset.join(possibleToBeAddedToDistancesVisitedDataset, distancesVisitedDataset.col("index")
-						 											   .equalTo(possibleToBeAddedToDistancesVisitedDataset.col("index")), "left");
+				int numPartitionsOfPossiblePathsToBeAddedToDistancesVisitedDataset = possiblePathsToBeAddedToDistancesVisitedDataset.rdd().getNumPartitions();
+				
+				distancesVisitedDataset = distancesVisitedDataset.repartition(numPartitionsOfPossiblePathsToBeAddedToDistancesVisitedDataset)
+																 .join(possiblePathsToBeAddedToDistancesVisitedDataset, distancesVisitedDataset.col("index")
+						 											   .equalTo(possiblePathsToBeAddedToDistancesVisitedDataset.col("index")), "left");
 				
 				distancesVisitedDataset = distancesVisitedDataset.map(new MapFunction<Row, Row>() {
 
@@ -613,16 +629,25 @@ public class FlightAnalyser {
 			Dataset<Row> minimumSpanningTreeRowsDataset = sparkSession.createDataFrame(minimumSpanningTreeRowsJavaRDD, coordinateAdjacencyMatrixEntriesDatasetSchema)
 			        												  .sort(functions.asc("row_index"));
 			
-			Dataset<Row> minimumSpanningTreeComplementRowsDataset = coordinateAdjacencyMatrixRowsDataset.join(minimumSpanningTreeRowsDataset,
+			int numPartitionsOfMinimumSpanningTreeRowsDataset = minimumSpanningTreeRowsDataset.rdd().getNumPartitions();
+			
+			Dataset<Row> minimumSpanningTreeComplementRowsDataset = coordinateAdjacencyMatrixRowsDataset
+																    .repartition(numPartitionsOfMinimumSpanningTreeRowsDataset)
+																	.join(minimumSpanningTreeRowsDataset,
 																			(coordinateAdjacencyMatrixRowsDataset.col("row_index")
 																				.equalTo(minimumSpanningTreeRowsDataset.col("row_index")))
 																			.and((coordinateAdjacencyMatrixRowsDataset.col("column_index")
 																				.equalTo(minimumSpanningTreeRowsDataset.col("column_index")))),
 					 														"leftanti");
 			
-			minimumSpanningTreeComplementRowsDataset = minimumSpanningTreeComplementRowsDataset.join(minimumSpanningTreeRowsDataset,
-					(coordinateAdjacencyMatrixRowsDataset.col("row_index").equalTo(minimumSpanningTreeRowsDataset.col("column_index")))
-					.and((coordinateAdjacencyMatrixRowsDataset.col("column_index").equalTo(minimumSpanningTreeRowsDataset.col("row_index")))), "leftanti");
+			minimumSpanningTreeComplementRowsDataset = minimumSpanningTreeComplementRowsDataset
+													  .repartition(numPartitionsOfMinimumSpanningTreeRowsDataset)
+													  .join(minimumSpanningTreeRowsDataset,
+															(coordinateAdjacencyMatrixRowsDataset.col("row_index")
+																.equalTo(minimumSpanningTreeRowsDataset.col("column_index")))
+															.and((coordinateAdjacencyMatrixRowsDataset.col("column_index")
+																.equalTo(minimumSpanningTreeRowsDataset.col("row_index")))),
+															"leftanti");
 			
 			JavaRDD<MatrixEntry> minimumSpanningTreeComplementCoordinateAdjacencyMatrixJavaRDD = minimumSpanningTreeComplementRowsDataset.toJavaRDD()
 																								.map(row -> new MatrixEntry(row.getInt(0), row.getInt(1), row.getDouble(2)));
@@ -697,8 +722,12 @@ public class FlightAnalyser {
 																							   .select("row_index", "column_index", "distance_reduced_factor")
 																							   .withColumnRenamed("distance_reduced_factor", "distance");
 		
+		int numPartitionsOfBottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset = bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset
+																									.rdd().getNumPartitions();
+		
 		// The Coordinate Adjacency Matrix, as a format of Dataset (built of rows), without all the routes going out from the Bottleneck Airport
 		Dataset<Row> coordinateAdjacencyMatrixRowsDatasetWithoutBottleneckAirport = initialCoordinateAdjacencyMatrixRowsDataset
+						  .repartition(numPartitionsOfBottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset)
 						  .join(bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset,
 								initialCoordinateAdjacencyMatrixRowsDataset.col("row_index")
 									.equalTo(bottleneckRoutesReducedByFactorFromCoordinateAdjacencyMatrixRowsDataset.col("row_index"))
