@@ -1,0 +1,223 @@
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+19/05/31 23:09:09 INFO SparkContext: Running Spark version 2.4.2
+19/05/31 23:09:09 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+19/05/31 23:09:09 INFO SparkContext: Submitted application: FlightAnalyser
+19/05/31 23:09:09 INFO SecurityManager: Changing view acls to: rubenandrebarreiro
+19/05/31 23:09:09 INFO SecurityManager: Changing modify acls to: rubenandrebarreiro
+19/05/31 23:09:09 INFO SecurityManager: Changing view acls groups to: 
+19/05/31 23:09:09 INFO SecurityManager: Changing modify acls groups to: 
+19/05/31 23:09:09 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users  with view permissions: Set(rubenandrebarreiro); groups with view permissions: Set(); users  with modify permissions: Set(rubenandrebarreiro); groups with modify permissions: Set()
+19/05/31 23:09:11 INFO Utils: Successfully started service 'sparkDriver' on port 59643.
+19/05/31 23:09:11 INFO SparkEnv: Registering MapOutputTracker
+19/05/31 23:09:11 INFO SparkEnv: Registering BlockManagerMaster
+19/05/31 23:09:11 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+19/05/31 23:09:11 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+19/05/31 23:09:11 INFO DiskBlockManager: Created local directory at C:\Users\rubenandrebarreiro\AppData\Local\Temp\blockmgr-f4c80aa3-c2c2-44a5-8555-ff05adb97aca
+19/05/31 23:09:11 INFO MemoryStore: MemoryStore started with capacity 19.1 GB
+19/05/31 23:09:11 INFO SparkEnv: Registering OutputCommitCoordinator
+19/05/31 23:09:12 INFO Utils: Successfully started service 'SparkUI' on port 4040.
+19/05/31 23:09:12 INFO SparkUI: Bound SparkUI to 0.0.0.0, and started at http://RUBEN-LAPTOP:4040
+19/05/31 23:09:12 INFO Executor: Starting executor ID driver on host localhost
+19/05/31 23:09:12 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 59684.
+19/05/31 23:09:12 INFO NettyBlockTransferService: Server created on RUBEN-LAPTOP:59684
+19/05/31 23:09:12 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+19/05/31 23:09:12 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, RUBEN-LAPTOP, 59684, None)
+19/05/31 23:09:12 INFO BlockManagerMasterEndpoint: Registering block manager RUBEN-LAPTOP:59684 with 19.1 GB RAM, BlockManagerId(driver, RUBEN-LAPTOP, 59684, None)
+19/05/31 23:09:12 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, RUBEN-LAPTOP, 59684, None)
+19/05/31 23:09:12 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, RUBEN-LAPTOP, 59684, None)
+
+The number of Airports that will be processed by the Algorithm: 10
+
+
+The Reduce Factor to apply to all the Routes going out from the Bottleneck Airport will be: 0.20145983
+
+
+
+Starting the computing of the Minimum Spanning Tree - M.S.T. (Prim's Algorithm)...
+
+The initial vertex to compute the Minimum Spanning Tree (M.S.T.) is: 8
+
+Already visited 1 Airports!
+
+The Vertex Index with minimum distance is: 6
+Next Last Vertex to be visited: 6
+Last Vertex visited: 8
+
+
+
+Already visited 2 Airports!
+
+The Vertex Index with minimum distance is: 7
+Next Last Vertex to be visited: 7
+Last Vertex visited: 6
+
+
+
+Already visited 3 Airports!
+
+The Vertex Index with minimum distance is: 1
+Next Last Vertex to be visited: 1
+Last Vertex visited: 7
+
+
+
+Already visited 4 Airports!
+
+The Vertex Index with minimum distance is: 3
+Next Last Vertex to be visited: 3
+Last Vertex visited: 1
+
+
+
+Already visited 5 Airports!
+
+The Vertex Index with minimum distance is: 5
+Next Last Vertex to be visited: 5
+Last Vertex visited: 3
+
+
+
+Already visited 6 Airports!
+
+The Vertex Index with minimum distance is: 10
+Next Last Vertex to be visited: 10
+Last Vertex visited: 5
+
+
+
+Already visited 7 Airports!
+
+The Vertex Index with minimum distance is: 4
+Next Last Vertex to be visited: 4
+Last Vertex visited: 10
+
+
+
+Already visited 8 Airports!
+
+The Vertex Index with minimum distance is: 2
+Next Last Vertex to be visited: 2
+Last Vertex visited: 4
+
+
+
+Already visited 9 Airports!
+
+The Vertex Index with minimum distance is: 9
+Next Last Vertex to be visited: 9
+Last Vertex visited: 2
+
+
+
+
+The content of the Minimum Spanning Tree (Prim's Algorithm) is:
+- (7,1) = 41.0
+- (8,6) = 9.166666666666666
+- (8,3) = 41.53846153846154
+- (6,5) = 64.1888888888889
+- (-1,9) = 1.7976931348623157E308
+- (3,4) = 143.9551282051282
+- (8,8) = 0.0
+- (6,7) = 15.5
+- (5,10) = 140.35105105105106
+- (-1,2) = 1.7976931348623157E308
+
+
+The Bottleneck Airport with the highest aggregated/sum of Average Departure Delay is:
+- 9 => 7.25
+
+
+
+The initial vertex to compute the Minimum Spanning Tree (M.S.T.) is: 2
+
+Already visited 1 Airports!
+
+The Vertex Index with minimum distance is: 9
+Next Last Vertex to be visited: 9
+Last Vertex visited: 2
+
+
+
+Already visited 2 Airports!
+
+The Vertex Index with minimum distance is: 10
+Next Last Vertex to be visited: 10
+Last Vertex visited: 9
+
+
+
+Already visited 3 Airports!
+
+The Vertex Index with minimum distance is: 7
+Next Last Vertex to be visited: 7
+Last Vertex visited: 10
+
+
+
+Already visited 4 Airports!
+
+The Vertex Index with minimum distance is: 8
+Next Last Vertex to be visited: 8
+Last Vertex visited: 7
+
+
+
+Already visited 5 Airports!
+
+The Vertex Index with minimum distance is: 4
+Next Last Vertex to be visited: 4
+Last Vertex visited: 8
+
+
+
+Already visited 6 Airports!
+
+The Vertex Index with minimum distance is: 5
+Next Last Vertex to be visited: 5
+Last Vertex visited: 4
+
+
+
+Already visited 7 Airports!
+
+The Vertex Index with minimum distance is: 3
+Next Last Vertex to be visited: 3
+Last Vertex visited: 5
+
+
+
+Already visited 8 Airports!
+
+The Vertex Index with minimum distance is: 6
+Next Last Vertex to be visited: 6
+Last Vertex visited: 3
+
+
+
+Already visited 9 Airports!
+
+The Vertex Index with minimum distance is: 1
+Next Last Vertex to be visited: 1
+Last Vertex visited: 6
+
+
+
+
+The content of the Minimum Spanning Tree (Prim's Algorithm) with Bottleneck Airport Reduced by Factor is:
+(-1,1) = 1.7976931348623157E308
+(-1,6) = 1.7976931348623157E308
+(-1,3) = 1.7976931348623157E308
+(-1,5) = 1.7976931348623157E308
+(2,9) = 1.4605837315320969
+(-1,4) = 1.7976931348623157E308
+(-1,8) = 1.7976931348623157E308
+(-1,7) = 1.7976931348623157E308
+(-1,10) = 1.7976931348623157E308
+(2,2) = 0.0
+
+
+It took 00h:02m:04s to process and execute the whole Algorithm with a Dataset with 10 Airports!
+
+
+Terminating Spark's Session...
+Java HotSpot(TM) 64-Bit Server VM warning: MaxNewSize (16777216k) is equal to or greater than the entire heap (16777216k).  A new max generation size of 16776704k will be used.

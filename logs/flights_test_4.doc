@@ -1,0 +1,1177 @@
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+19/05/31 23:11:48 INFO SparkContext: Running Spark version 2.4.2
+19/05/31 23:11:49 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+19/05/31 23:11:49 INFO SparkContext: Submitted application: FlightAnalyser
+19/05/31 23:11:49 INFO SecurityManager: Changing view acls to: rubenandrebarreiro
+19/05/31 23:11:49 INFO SecurityManager: Changing modify acls to: rubenandrebarreiro
+19/05/31 23:11:49 INFO SecurityManager: Changing view acls groups to: 
+19/05/31 23:11:49 INFO SecurityManager: Changing modify acls groups to: 
+19/05/31 23:11:49 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users  with view permissions: Set(rubenandrebarreiro); groups with view permissions: Set(); users  with modify permissions: Set(rubenandrebarreiro); groups with modify permissions: Set()
+19/05/31 23:11:50 INFO Utils: Successfully started service 'sparkDriver' on port 59895.
+19/05/31 23:11:50 INFO SparkEnv: Registering MapOutputTracker
+19/05/31 23:11:51 INFO SparkEnv: Registering BlockManagerMaster
+19/05/31 23:11:51 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+19/05/31 23:11:51 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+19/05/31 23:11:51 INFO DiskBlockManager: Created local directory at C:\Users\rubenandrebarreiro\AppData\Local\Temp\blockmgr-ab52b827-5dbb-4f1f-8371-409f1960a176
+19/05/31 23:11:51 INFO MemoryStore: MemoryStore started with capacity 19.1 GB
+19/05/31 23:11:51 INFO SparkEnv: Registering OutputCommitCoordinator
+19/05/31 23:11:51 INFO Utils: Successfully started service 'SparkUI' on port 4040.
+19/05/31 23:11:51 INFO SparkUI: Bound SparkUI to 0.0.0.0, and started at http://RUBEN-LAPTOP:4040
+19/05/31 23:11:51 INFO Executor: Starting executor ID driver on host localhost
+19/05/31 23:11:51 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 59936.
+19/05/31 23:11:51 INFO NettyBlockTransferService: Server created on RUBEN-LAPTOP:59936
+19/05/31 23:11:51 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+19/05/31 23:11:51 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, RUBEN-LAPTOP, 59936, None)
+19/05/31 23:11:51 INFO BlockManagerMasterEndpoint: Registering block manager RUBEN-LAPTOP:59936 with 19.1 GB RAM, BlockManagerId(driver, RUBEN-LAPTOP, 59936, None)
+19/05/31 23:11:51 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, RUBEN-LAPTOP, 59936, None)
+19/05/31 23:11:51 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, RUBEN-LAPTOP, 59936, None)
+
+The number of Airports that will be processed by the Algorithm: 63
+
+
+The Reduce Factor to apply to all the Routes going out from the Bottleneck Airport will be: 0.57354015
+
+
+
+Starting the computing of the Minimum Spanning Tree - M.S.T. (Prim's Algorithm)...
+
+The initial vertex to compute the Minimum Spanning Tree (M.S.T.) is: 28
+
+Already visited 1 Airports!
+
+The Vertex Index with minimum distance is: 41
+Next Last Vertex to be visited: 41
+Last Vertex visited: 28
+
+
+
+Already visited 2 Airports!
+
+The Vertex Index with minimum distance is: 40
+Next Last Vertex to be visited: 40
+Last Vertex visited: 41
+
+
+
+Already visited 3 Airports!
+
+The Vertex Index with minimum distance is: 26
+Next Last Vertex to be visited: 26
+Last Vertex visited: 40
+
+
+
+Already visited 4 Airports!
+
+The Vertex Index with minimum distance is: 58
+Next Last Vertex to be visited: 58
+Last Vertex visited: 26
+
+
+
+Already visited 5 Airports!
+
+The Vertex Index with minimum distance is: 5
+Next Last Vertex to be visited: 5
+Last Vertex visited: 58
+
+
+
+Already visited 6 Airports!
+
+The Vertex Index with minimum distance is: 42
+Next Last Vertex to be visited: 42
+Last Vertex visited: 5
+
+
+
+Already visited 7 Airports!
+
+The Vertex Index with minimum distance is: 46
+Next Last Vertex to be visited: 46
+Last Vertex visited: 42
+
+
+
+Already visited 8 Airports!
+
+The Vertex Index with minimum distance is: 32
+Next Last Vertex to be visited: 32
+Last Vertex visited: 46
+
+
+
+Already visited 9 Airports!
+
+The Vertex Index with minimum distance is: 16
+Next Last Vertex to be visited: 16
+Last Vertex visited: 32
+
+
+
+Already visited 10 Airports!
+
+The Vertex Index with minimum distance is: 52
+Next Last Vertex to be visited: 52
+Last Vertex visited: 16
+
+
+
+Already visited 11 Airports!
+
+The Vertex Index with minimum distance is: 60
+Next Last Vertex to be visited: 60
+Last Vertex visited: 52
+
+
+
+Already visited 12 Airports!
+
+The Vertex Index with minimum distance is: 36
+Next Last Vertex to be visited: 36
+Last Vertex visited: 60
+
+
+
+Already visited 13 Airports!
+
+The Vertex Index with minimum distance is: 62
+Next Last Vertex to be visited: 62
+Last Vertex visited: 36
+
+
+
+Already visited 14 Airports!
+
+The Vertex Index with minimum distance is: 31
+Next Last Vertex to be visited: 31
+Last Vertex visited: 62
+
+
+
+Already visited 15 Airports!
+
+The Vertex Index with minimum distance is: 27
+Next Last Vertex to be visited: 27
+Last Vertex visited: 31
+
+
+
+Already visited 16 Airports!
+
+The Vertex Index with minimum distance is: 24
+Next Last Vertex to be visited: 24
+Last Vertex visited: 27
+
+
+
+Already visited 17 Airports!
+
+The Vertex Index with minimum distance is: 11
+Next Last Vertex to be visited: 11
+Last Vertex visited: 24
+
+
+
+Already visited 18 Airports!
+
+The Vertex Index with minimum distance is: 53
+Next Last Vertex to be visited: 53
+Last Vertex visited: 11
+
+
+
+Already visited 19 Airports!
+
+The Vertex Index with minimum distance is: 50
+Next Last Vertex to be visited: 50
+Last Vertex visited: 53
+
+
+
+Already visited 20 Airports!
+
+The Vertex Index with minimum distance is: 55
+Next Last Vertex to be visited: 55
+Last Vertex visited: 50
+
+
+
+Already visited 21 Airports!
+
+The Vertex Index with minimum distance is: 43
+Next Last Vertex to be visited: 43
+Last Vertex visited: 55
+
+
+
+Already visited 22 Airports!
+
+The Vertex Index with minimum distance is: 13
+Next Last Vertex to be visited: 13
+Last Vertex visited: 43
+
+
+
+Already visited 23 Airports!
+
+The Vertex Index with minimum distance is: 23
+Next Last Vertex to be visited: 23
+Last Vertex visited: 13
+
+
+
+Already visited 24 Airports!
+
+The Vertex Index with minimum distance is: 61
+Next Last Vertex to be visited: 61
+Last Vertex visited: 23
+
+
+
+Already visited 25 Airports!
+
+The Vertex Index with minimum distance is: 4
+Next Last Vertex to be visited: 4
+Last Vertex visited: 61
+
+
+
+Already visited 26 Airports!
+
+The Vertex Index with minimum distance is: 10
+Next Last Vertex to be visited: 10
+Last Vertex visited: 4
+
+
+
+Already visited 27 Airports!
+
+The Vertex Index with minimum distance is: 3
+Next Last Vertex to be visited: 3
+Last Vertex visited: 10
+
+
+
+Already visited 28 Airports!
+
+The Vertex Index with minimum distance is: 21
+Next Last Vertex to be visited: 21
+Last Vertex visited: 3
+
+
+
+Already visited 29 Airports!
+
+The Vertex Index with minimum distance is: 34
+Next Last Vertex to be visited: 34
+Last Vertex visited: 21
+
+
+
+Already visited 30 Airports!
+
+The Vertex Index with minimum distance is: 6
+Next Last Vertex to be visited: 6
+Last Vertex visited: 34
+
+
+
+Already visited 31 Airports!
+
+The Vertex Index with minimum distance is: 25
+Next Last Vertex to be visited: 25
+Last Vertex visited: 6
+
+
+
+Already visited 32 Airports!
+
+The Vertex Index with minimum distance is: 47
+Next Last Vertex to be visited: 47
+Last Vertex visited: 25
+
+
+
+Already visited 33 Airports!
+
+The Vertex Index with minimum distance is: 38
+Next Last Vertex to be visited: 38
+Last Vertex visited: 47
+
+
+
+Already visited 34 Airports!
+
+The Vertex Index with minimum distance is: 48
+Next Last Vertex to be visited: 48
+Last Vertex visited: 38
+
+
+
+Already visited 35 Airports!
+
+The Vertex Index with minimum distance is: 20
+Next Last Vertex to be visited: 20
+Last Vertex visited: 48
+
+
+
+Already visited 36 Airports!
+
+The Vertex Index with minimum distance is: 9
+Next Last Vertex to be visited: 9
+Last Vertex visited: 20
+
+
+
+Already visited 37 Airports!
+
+The Vertex Index with minimum distance is: 44
+Next Last Vertex to be visited: 44
+Last Vertex visited: 9
+
+
+
+Already visited 38 Airports!
+
+The Vertex Index with minimum distance is: 54
+Next Last Vertex to be visited: 54
+Last Vertex visited: 44
+
+
+
+Already visited 39 Airports!
+
+The Vertex Index with minimum distance is: 15
+Next Last Vertex to be visited: 15
+Last Vertex visited: 54
+
+
+
+Already visited 40 Airports!
+
+The Vertex Index with minimum distance is: 59
+Next Last Vertex to be visited: 59
+Last Vertex visited: 15
+
+
+
+Already visited 41 Airports!
+
+The Vertex Index with minimum distance is: 19
+Next Last Vertex to be visited: 19
+Last Vertex visited: 59
+
+
+
+Already visited 42 Airports!
+
+The Vertex Index with minimum distance is: 30
+Next Last Vertex to be visited: 30
+Last Vertex visited: 19
+
+
+
+Already visited 43 Airports!
+
+The Vertex Index with minimum distance is: 7
+Next Last Vertex to be visited: 7
+Last Vertex visited: 30
+
+
+
+Already visited 44 Airports!
+
+The Vertex Index with minimum distance is: 12
+Next Last Vertex to be visited: 12
+Last Vertex visited: 7
+
+
+
+Already visited 45 Airports!
+
+The Vertex Index with minimum distance is: 49
+Next Last Vertex to be visited: 49
+Last Vertex visited: 12
+
+
+
+Already visited 46 Airports!
+
+The Vertex Index with minimum distance is: 1
+Next Last Vertex to be visited: 1
+Last Vertex visited: 49
+
+
+
+Already visited 47 Airports!
+
+The Vertex Index with minimum distance is: 63
+Next Last Vertex to be visited: 63
+Last Vertex visited: 1
+
+
+
+Already visited 48 Airports!
+
+The Vertex Index with minimum distance is: 33
+Next Last Vertex to be visited: 33
+Last Vertex visited: 63
+
+
+
+Already visited 49 Airports!
+
+The Vertex Index with minimum distance is: 22
+Next Last Vertex to be visited: 22
+Last Vertex visited: 33
+
+
+
+Already visited 50 Airports!
+
+The Vertex Index with minimum distance is: 2
+Next Last Vertex to be visited: 2
+Last Vertex visited: 22
+
+
+
+Already visited 51 Airports!
+
+The Vertex Index with minimum distance is: 56
+Next Last Vertex to be visited: 56
+Last Vertex visited: 2
+
+
+
+Already visited 52 Airports!
+
+The Vertex Index with minimum distance is: 51
+Next Last Vertex to be visited: 51
+Last Vertex visited: 56
+
+
+
+Already visited 53 Airports!
+
+The Vertex Index with minimum distance is: 18
+Next Last Vertex to be visited: 18
+Last Vertex visited: 51
+
+
+
+Already visited 54 Airports!
+
+The Vertex Index with minimum distance is: 39
+Next Last Vertex to be visited: 39
+Last Vertex visited: 18
+
+
+
+Already visited 55 Airports!
+
+The Vertex Index with minimum distance is: 37
+Next Last Vertex to be visited: 37
+Last Vertex visited: 39
+
+
+
+Already visited 56 Airports!
+
+The Vertex Index with minimum distance is: 35
+Next Last Vertex to be visited: 35
+Last Vertex visited: 37
+
+
+
+Already visited 57 Airports!
+
+The Vertex Index with minimum distance is: 14
+Next Last Vertex to be visited: 14
+Last Vertex visited: 35
+
+
+
+Already visited 58 Airports!
+
+The Vertex Index with minimum distance is: 45
+Next Last Vertex to be visited: 45
+Last Vertex visited: 14
+
+
+
+Already visited 59 Airports!
+
+The Vertex Index with minimum distance is: 8
+Next Last Vertex to be visited: 8
+Last Vertex visited: 45
+
+
+
+Already visited 60 Airports!
+
+The Vertex Index with minimum distance is: 57
+Next Last Vertex to be visited: 57
+Last Vertex visited: 8
+
+
+
+Already visited 61 Airports!
+
+The Vertex Index with minimum distance is: 29
+Next Last Vertex to be visited: 29
+Last Vertex visited: 57
+
+
+
+Already visited 62 Airports!
+
+The Vertex Index with minimum distance is: 17
+Next Last Vertex to be visited: 17
+Last Vertex visited: 29
+
+
+
+
+The content of the Minimum Spanning Tree (Prim's Algorithm) is:
+- (40,31) = 119.3883495145631
+- (40,53) = 123.6004707266843
+- (5,34) = 135.79109550998646
+- (28,28) = 0.0
+- (40,26) = 100.31142643764002
+- (58,27) = 119.74588127499868
+- (40,44) = 147.80214261801137
+- (11,12) = 154.70739713361073
+- (11,22) = 160.37406380027738
+- (11,47) = 140.65739713361071
+- (11,1) = 156.2990638002774
+- (40,52) = 113.1740638002774
+- (11,13) = 128.5073971336107
+- (11,6) = 136.22961935583294
+- (40,16) = 112.72168284789643
+- (27,3) = 134.9766505057679
+- (27,20) = 145.74588127499868
+- (28,40) = 67.3883495145631
+- (11,57) = 204.5073971336107
+- (11,54) = 150.8777675039811
+- (11,48) = 144.38739713361073
+- (40,5) = 107.47530603630224
+- (27,19) = 152.65892475325956
+- (28,41) = 27.5
+- (27,15) = 151.03159556071296
+- (40,43) = 126.25041848008034
+- (34,37) = 165.36252408141505
+- (11,61) = 129.0073971336107
+- (27,9) = 146.30143683055422
+- (11,17) = 219.87103349724708
+- (11,35) = 169.05912127154176
+- (11,4) = 132.5073971336107
+- (24,55) = 125.42168284789643
+- (34,59) = 152.29109550998646
+- (11,8) = 179.53680889831662
+- (11,23) = 129.0073971336107
+- (11,39) = 164.47798536890485
+- (11,49) = 155.45977808599167
+- (11,7) = 154.03239713361071
+- (11,51) = 162.5539087615177
+- (11,63) = 158.0073971336107
+- (40,10) = 133.5354083380925
+- (40,50) = 124.69869434214931
+- (40,45) = 177.7883495145631
+- (27,38) = 141.0616707486829
+- (27,25) = 139.81254794166534
+- (40,24) = 123.42168284789643
+- (40,62) = 117.48358760980119
+- (27,29) = 208.8569923861098
+- (24,21) = 135.0883495145631
+- (40,32) = 110.43380406001765
+- (40,60) = 115.12747994934571
+- (11,56) = 162.5073971336107
+- (40,58) = 102.00903916973552
+- (46,11) = 123.50739713361072
+- (11,33) = 158.02021764643123
+- (11,14) = 171.55739713361072
+- (40,42) = 107.69269734065006
+- (34,2) = 161.29109550998646
+- (11,30) = 153.65025427646788
+- (40,46) = 109.1740638002774
+- (11,18) = 164.3198971336107
+- (40,36) = 115.71443647108484
+
+
+The Bottleneck Airport with the highest aggregated/sum of Average Departure Delay is:
+- 11 => 809.1975142183372
+
+
+
+The initial vertex to compute the Minimum Spanning Tree (M.S.T.) is: 14
+
+Already visited 1 Airports!
+
+The Vertex Index with minimum distance is: 11
+Next Last Vertex to be visited: 11
+Last Vertex visited: 14
+
+
+
+Already visited 2 Airports!
+
+The Vertex Index with minimum distance is: 13
+Next Last Vertex to be visited: 13
+Last Vertex visited: 11
+
+
+
+Already visited 3 Airports!
+
+The Vertex Index with minimum distance is: 23
+Next Last Vertex to be visited: 23
+Last Vertex visited: 13
+
+
+
+Already visited 4 Airports!
+
+The Vertex Index with minimum distance is: 61
+Next Last Vertex to be visited: 61
+Last Vertex visited: 23
+
+
+
+Already visited 5 Airports!
+
+The Vertex Index with minimum distance is: 4
+Next Last Vertex to be visited: 4
+Last Vertex visited: 61
+
+
+
+Already visited 6 Airports!
+
+The Vertex Index with minimum distance is: 6
+Next Last Vertex to be visited: 6
+Last Vertex visited: 4
+
+
+
+Already visited 7 Airports!
+
+The Vertex Index with minimum distance is: 46
+Next Last Vertex to be visited: 46
+Last Vertex visited: 6
+
+
+
+Already visited 8 Airports!
+
+The Vertex Index with minimum distance is: 47
+Next Last Vertex to be visited: 47
+Last Vertex visited: 46
+
+
+
+Already visited 9 Airports!
+
+The Vertex Index with minimum distance is: 21
+Next Last Vertex to be visited: 21
+Last Vertex visited: 47
+
+
+
+Already visited 10 Airports!
+
+The Vertex Index with minimum distance is: 48
+Next Last Vertex to be visited: 48
+Last Vertex visited: 21
+
+
+
+Already visited 11 Airports!
+
+The Vertex Index with minimum distance is: 42
+Next Last Vertex to be visited: 42
+Last Vertex visited: 48
+
+
+
+Already visited 12 Airports!
+
+The Vertex Index with minimum distance is: 34
+Next Last Vertex to be visited: 34
+Last Vertex visited: 42
+
+
+
+Already visited 13 Airports!
+
+The Vertex Index with minimum distance is: 3
+Next Last Vertex to be visited: 3
+Last Vertex visited: 34
+
+
+
+Already visited 14 Airports!
+
+The Vertex Index with minimum distance is: 26
+Next Last Vertex to be visited: 26
+Last Vertex visited: 3
+
+
+
+Already visited 15 Airports!
+
+The Vertex Index with minimum distance is: 50
+Next Last Vertex to be visited: 50
+Last Vertex visited: 26
+
+
+
+Already visited 16 Airports!
+
+The Vertex Index with minimum distance is: 54
+Next Last Vertex to be visited: 54
+Last Vertex visited: 50
+
+
+
+Already visited 17 Airports!
+
+The Vertex Index with minimum distance is: 30
+Next Last Vertex to be visited: 30
+Last Vertex visited: 54
+
+
+
+Already visited 18 Airports!
+
+The Vertex Index with minimum distance is: 7
+Next Last Vertex to be visited: 7
+Last Vertex visited: 30
+
+
+
+Already visited 19 Airports!
+
+The Vertex Index with minimum distance is: 12
+Next Last Vertex to be visited: 12
+Last Vertex visited: 7
+
+
+
+Already visited 20 Airports!
+
+The Vertex Index with minimum distance is: 52
+Next Last Vertex to be visited: 52
+Last Vertex visited: 12
+
+
+
+Already visited 21 Airports!
+
+The Vertex Index with minimum distance is: 49
+Next Last Vertex to be visited: 49
+Last Vertex visited: 52
+
+
+
+Already visited 22 Airports!
+
+The Vertex Index with minimum distance is: 1
+Next Last Vertex to be visited: 1
+Last Vertex visited: 49
+
+
+
+Already visited 23 Airports!
+
+The Vertex Index with minimum distance is: 63
+Next Last Vertex to be visited: 63
+Last Vertex visited: 1
+
+
+
+Already visited 24 Airports!
+
+The Vertex Index with minimum distance is: 33
+Next Last Vertex to be visited: 33
+Last Vertex visited: 63
+
+
+
+Already visited 25 Airports!
+
+The Vertex Index with minimum distance is: 36
+Next Last Vertex to be visited: 36
+Last Vertex visited: 33
+
+
+
+Already visited 26 Airports!
+
+The Vertex Index with minimum distance is: 62
+Next Last Vertex to be visited: 62
+Last Vertex visited: 36
+
+
+
+Already visited 27 Airports!
+
+The Vertex Index with minimum distance is: 53
+Next Last Vertex to be visited: 53
+Last Vertex visited: 62
+
+
+
+Already visited 28 Airports!
+
+The Vertex Index with minimum distance is: 22
+Next Last Vertex to be visited: 22
+Last Vertex visited: 53
+
+
+
+Already visited 29 Airports!
+
+The Vertex Index with minimum distance is: 32
+Next Last Vertex to be visited: 32
+Last Vertex visited: 22
+
+
+
+Already visited 30 Airports!
+
+The Vertex Index with minimum distance is: 58
+Next Last Vertex to be visited: 58
+Last Vertex visited: 32
+
+
+
+Already visited 31 Airports!
+
+The Vertex Index with minimum distance is: 56
+Next Last Vertex to be visited: 56
+Last Vertex visited: 58
+
+
+
+Already visited 32 Airports!
+
+The Vertex Index with minimum distance is: 51
+Next Last Vertex to be visited: 51
+Last Vertex visited: 56
+
+
+
+Already visited 33 Airports!
+
+The Vertex Index with minimum distance is: 24
+Next Last Vertex to be visited: 24
+Last Vertex visited: 51
+
+
+
+Already visited 34 Airports!
+
+The Vertex Index with minimum distance is: 18
+Next Last Vertex to be visited: 18
+Last Vertex visited: 24
+
+
+
+Already visited 35 Airports!
+
+The Vertex Index with minimum distance is: 39
+Next Last Vertex to be visited: 39
+Last Vertex visited: 18
+
+
+
+Already visited 36 Airports!
+
+The Vertex Index with minimum distance is: 38
+Next Last Vertex to be visited: 38
+Last Vertex visited: 39
+
+
+
+Already visited 37 Airports!
+
+The Vertex Index with minimum distance is: 55
+Next Last Vertex to be visited: 55
+Last Vertex visited: 38
+
+
+
+Already visited 38 Airports!
+
+The Vertex Index with minimum distance is: 15
+Next Last Vertex to be visited: 15
+Last Vertex visited: 55
+
+
+
+Already visited 39 Airports!
+
+The Vertex Index with minimum distance is: 2
+Next Last Vertex to be visited: 2
+Last Vertex visited: 15
+
+
+
+Already visited 40 Airports!
+
+The Vertex Index with minimum distance is: 31
+Next Last Vertex to be visited: 31
+Last Vertex visited: 2
+
+
+
+Already visited 41 Airports!
+
+The Vertex Index with minimum distance is: 35
+Next Last Vertex to be visited: 35
+Last Vertex visited: 31
+
+
+
+Already visited 42 Airports!
+
+The Vertex Index with minimum distance is: 37
+Next Last Vertex to be visited: 37
+Last Vertex visited: 35
+
+
+
+Already visited 43 Airports!
+
+The Vertex Index with minimum distance is: 27
+Next Last Vertex to be visited: 27
+Last Vertex visited: 37
+
+
+
+Already visited 44 Airports!
+
+The Vertex Index with minimum distance is: 43
+Next Last Vertex to be visited: 43
+Last Vertex visited: 27
+
+
+
+Already visited 45 Airports!
+
+The Vertex Index with minimum distance is: 59
+Next Last Vertex to be visited: 59
+Last Vertex visited: 43
+
+
+
+Already visited 46 Airports!
+
+The Vertex Index with minimum distance is: 8
+Next Last Vertex to be visited: 8
+Last Vertex visited: 59
+
+
+
+Already visited 47 Airports!
+
+The Vertex Index with minimum distance is: 44
+Next Last Vertex to be visited: 44
+Last Vertex visited: 8
+
+
+
+Already visited 48 Airports!
+
+The Vertex Index with minimum distance is: 10
+Next Last Vertex to be visited: 10
+Last Vertex visited: 44
+
+
+
+Already visited 49 Airports!
+
+The Vertex Index with minimum distance is: 9
+Next Last Vertex to be visited: 9
+Last Vertex visited: 10
+
+
+
+Already visited 50 Airports!
+
+The Vertex Index with minimum distance is: 5
+Next Last Vertex to be visited: 5
+Last Vertex visited: 9
+
+
+
+Already visited 51 Airports!
+
+The Vertex Index with minimum distance is: 20
+Next Last Vertex to be visited: 20
+Last Vertex visited: 5
+
+
+
+Already visited 52 Airports!
+
+The Vertex Index with minimum distance is: 60
+Next Last Vertex to be visited: 60
+Last Vertex visited: 20
+
+
+
+Already visited 53 Airports!
+
+The Vertex Index with minimum distance is: 57
+Next Last Vertex to be visited: 57
+Last Vertex visited: 60
+
+
+
+Already visited 54 Airports!
+
+The Vertex Index with minimum distance is: 40
+Next Last Vertex to be visited: 40
+Last Vertex visited: 57
+
+
+
+Already visited 55 Airports!
+
+The Vertex Index with minimum distance is: 19
+Next Last Vertex to be visited: 19
+Last Vertex visited: 40
+
+
+
+Already visited 56 Airports!
+
+The Vertex Index with minimum distance is: 25
+Next Last Vertex to be visited: 25
+Last Vertex visited: 19
+
+
+
+Already visited 57 Airports!
+
+The Vertex Index with minimum distance is: 17
+Next Last Vertex to be visited: 17
+Last Vertex visited: 25
+
+
+
+Already visited 58 Airports!
+
+The Vertex Index with minimum distance is: 16
+Next Last Vertex to be visited: 16
+Last Vertex visited: 17
+
+
+
+Already visited 59 Airports!
+
+The Vertex Index with minimum distance is: 28
+Next Last Vertex to be visited: 28
+Last Vertex visited: 16
+
+
+
+Already visited 60 Airports!
+
+The Vertex Index with minimum distance is: 29
+Next Last Vertex to be visited: 29
+Last Vertex visited: 28
+
+
+
+Already visited 61 Airports!
+
+The Vertex Index with minimum distance is: 41
+Next Last Vertex to be visited: 41
+Last Vertex visited: 29
+
+
+
+Already visited 62 Airports!
+
+The Vertex Index with minimum distance is: 45
+Next Last Vertex to be visited: 45
+Last Vertex visited: 41
+
+
+
+
+The content of the Minimum Spanning Tree (Prim's Algorithm) with Bottleneck Airport Reduced by Factor is:
+(11,31) = 53.15660679544273
+(11,53) = 48.401574753089385
+(11,34) = 41.8779900342226
+(40,28) = 143.40477536352006
+(11,26) = 43.09334892588002
+(3,27) = 57.5806721261759
+(34,44) = 64.37799003422259
+(11,12) = 45.45305697619915
+(11,22) = 48.703117832541466
+(11,47) = 37.39481785297394
+(11,1) = 46.36594171673059
+(11,52) = 45.86409408450126
+(11,13) = 30.426305016875265
+(11,6) = 34.85530951718489
+(40,16) = 121.34975918229028
+(11,3) = 42.34990289540667
+(34,20) = 70.40430582369629
+(26,40) = 76.01642584895694
+(11,57) = 74.0153565019369
+(11,54) = 43.25661061969068
+(11,48) = 39.53412261664867
+(34,5) = 70.19377950790681
+(11,19) = 76.49507421412889
+(40,41) = 163.49261632514742
+(11,15) = 52.65486114403686
+(34,43) = 58.30656146279402
+(11,37) = 57.33353153509753
+(11,61) = 30.71307509243488
+(11,9) = 67.6517919680902
+(11,17) = 82.82701882367783
+(11,35) = 53.68434700708964
+(11,4) = 32.72046562135219
+(24,55) = 52.35194985965887
+(34,59) = 58.3779900342226
+(11,8) = 59.693721551930196
+(11,23) = 30.71307509243488
+(11,39) = 51.056881629193526
+(11,49) = 45.88457766132695
+(11,7) = 45.06591737419367
+(11,51) = 49.953346441027726
+(11,63) = 47.34573947489261
+(11,10) = 64.85305258780718
+(11,50) = 43.19288393623299
+(40,45) = 186.41642584895695
+(11,38) = 51.38257976930875
+(27,25) = 77.64733879284256
+(21,24) = 50.35194985965887
+(11,62) = 48.096803958501134
+(27,29) = 146.691783237287
+(11,21) = 38.68528319299221
+(11,32) = 49.32126666208108
+(34,60) = 71.74465670088927
+(11,56) = 49.926670154929155
+(11,58) = 49.85672623406096
+(14,11) = 27.558604261279104
+(11,33) = 47.353092553753115
+(14,14) = 0.0
+(11,42) = 40.52559898223566
+(11,2) = 52.75412247886783
+(11,30) = 44.84674310215881
+(11,46) = 35.77934642732143
+(11,18) = 50.966211678832764
+(11,36) = 47.73225566369035
+
+
+It took 00h:31m:26s to process and execute the whole Algorithm with a Dataset with 63 Airports!
+
+
+Terminating Spark's Session...
+Java HotSpot(TM) 64-Bit Server VM warning: MaxNewSize (16777216k) is equal to or greater than the entire heap (16777216k).  A new max generation size of 16776704k will be used.
