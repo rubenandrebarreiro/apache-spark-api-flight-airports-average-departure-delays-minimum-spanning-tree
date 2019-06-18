@@ -37,7 +37,7 @@
 
 ##### Final Approval Grade of the Project
 
-[![grade of this project](http://progressed.io/bar/0?scale=20&title=&nbsp;grade&nbsp;&suffix=&nbsp;)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
+[![grade of this project](http://progressed.io/bar/18?scale=20&title=&nbsp;grade&nbsp;&suffix=&nbsp;)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
 
 
 ## Description
