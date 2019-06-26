@@ -16,9 +16,9 @@
 [![status of this version no. 4](https://img.shields.io/badge/status-documented-orange.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
 
 [![keyword of this version no. 1](https://img.shields.io/badge/keyword-high&nbsp;performance&nbsp;computing-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
-[![keyword of this version no. 2](https://img.shields.io/badge/keyword-neural&nbsp;networks-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
-[![keyword of this version no. 3](https://img.shields.io/badge/keyword-som-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
-[![keyword of this version no. 4](https://img.shields.io/badge/keyword-cuda-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
+[![keyword of this version no. 2](https://img.shields.io/badge/keyword-graph&nbsp;theory-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
+[![keyword of this version no. 3](https://img.shields.io/badge/keyword-prim&nbsp;algorithm-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
+[![keyword of this version no. 4](https://img.shields.io/badge/keyword-apache-&nbsp;spark&nbsp;api-brown.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/)
 
 [![technology used no. 1](https://img.shields.io/badge/built&nbsp;with-apache&nbsp;spark&nbsp;api-red.svg)](https://spark.apache.org/) 
 [![technology used no. 2](https://img.shields.io/badge/built&nbsp;with-java-red.svg)](https://www.java.com/) 
