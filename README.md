@@ -27,9 +27,10 @@
 [![software used no. 2](https://img.shields.io/badge/software-jetbrains&nbsp;intellij&nbsp;idea-gold.svg)](https://www.jetbrains.com/idea/)
 
 [![star this repository](http://githubbadges.com/star.svg?user=rubenandrebarreiro&repo=apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree&style=flat)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/stargazers)
-[![fork this repository](http://githubbadges.com/fork.svg?user=rubenandrebarreiro&repo=apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-trees&style=flat)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/fork)
+[![fork this repository](http://githubbadges.com/fork.svg?user=rubenandrebarreiro&repo=apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree&style=flat)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/fork)
 [![downloads of this repository](https://img.shields.io/github/downloads/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/total.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/archive/master.zip)
 [![price of this project](https://img.shields.io/badge/price-free-success.svg)](https://github.com/rubenandrebarreiro/apache-spark-api-flight-airports-average-departure-delays-minimum-spanning-tree/archive/master.zip)
+
 
 ##### Current Progress of the Project
 
