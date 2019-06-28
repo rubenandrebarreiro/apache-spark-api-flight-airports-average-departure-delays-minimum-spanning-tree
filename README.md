@@ -131,4 +131,4 @@ git clone git@github.com:rubenandrebarreiro/apache-spark-api-flight-airports-ave
 ## Classifications/Final Approval Grades
 
 ### Approval Grade of Lab Work
-* 18.1 of 20
+* 18 of 20
