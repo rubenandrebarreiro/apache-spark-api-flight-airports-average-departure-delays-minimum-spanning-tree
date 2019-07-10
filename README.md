@@ -102,6 +102,31 @@ git clone git@github.com:rubenandrebarreiro/apache-spark-api-flight-airports-ave
 * [**_Eclipse IDE_**](https://www.eclipse.org/)
 * [**_JetBrains IntelliJ IDEA_**](https://www.jetbrains.com/idea/)
 
+## Notes
+* There's some useful parameters which you can try in as **_JVM (Java Virtual Machine)_** parameters, for a _better **Memory and Java Heap Space** management_, in the case of _be running the application locally_, instead of running the application in a _cluster system_:
+##### Option #1
+```
+-Xms8g
+-Xmx16g
+-XX:MinHeapFreeRatio=50
+-XX:MaxHeapFreeRatio=50
+-XX:NewRatio=3
+-XX:NewSize=2048m
+-XX:MaxNewSize=2048m
+-XX:+AggressiveHeap
+```
+
+##### Option #2
+```
+-Xms12g
+-Xmx16g
+-XX:MinHeapFreeRatio=50
+-XX:MaxHeapFreeRatio=50
+-XX:NewRatio=3
+-XX:NewSize=2g
+-XX:MaxNewSize=2g
+-XX:+AggressiveHeap
+```
 
 ## Contributors
 
